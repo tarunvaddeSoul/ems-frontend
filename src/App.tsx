@@ -1,26 +1,32 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Sidebar from "./components/Sidebar/Sidebar";
+import Header from "./components/Header/Header";
+import Home from "./components/Home/Home";
+import { MantineProvider, Box } from "@mantine/core";
+import appTheme from "./appTheme";
+import Employee from "./components/Employee/Employee";
 
-function App() {
+const App = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <MantineProvider theme={appTheme} withGlobalClasses withCssVariables>
+      <Box h="150vh" bg="brandColor.0">
+        <Router>
+          <div className="flex">
+            <Sidebar />
+            <div className="flex-1 flex flex-col">
+              <Header />
+              <div className="p-6">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/employees" element={<Employee />} />
+                </Routes>
+              </div>
+            </div>
+          </div>
+        </Router>
+      </Box>
+    </MantineProvider>
   );
-}
+};
 
 export default App;
