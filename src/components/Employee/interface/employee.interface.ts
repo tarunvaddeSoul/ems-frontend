@@ -19,6 +19,7 @@ export interface IEmployee {
     designationName?: string;
     designationId?: string;
     employeeDepartmentId?: string;
+    employeeDepartmentName?: string;
     mobileNumber?: string;
     companyName?: string;
     companyId?: string;
@@ -54,8 +55,8 @@ export interface IEmployee {
     trainingCertificateDate?: string;
     medicalCertificateNumber?: string;
     medicalCertificateDate?: string;
-    photoUpload?: string;
-    aadhaarUpload?: string;
+    photo?: string;
+    aadhaar?: string;
     panCardUpload?: string;
     bankPassbook?: string;
     markSheet?: string;
@@ -87,7 +88,6 @@ export interface EmployeeFormValues {
     designationId: string;
     employeeDepartmentId: string;
     mobileNumber: string;
-    companyName: string;
     companyId: string;
     recruitedBy: string;
     gender: Gender | '';
@@ -95,9 +95,8 @@ export interface EmployeeFormValues {
     motherName: string;
     husbandName: string | null;
     category: Category | '';
-    dateOfBirth: Date | null;
-    age: number;
-    dateOfJoining: Date | null;
+    dateOfBirth: Date;
+    dateOfJoining: Date;
     highestEducationQualification: EducationQualification | '';
     bloodGroup: string;
     permanentAddress: string;
@@ -116,17 +115,17 @@ export interface EmployeeFormValues {
     pfUanNumber: string;
     esicNumber: string;
     policeVerificationNumber: string;
-    policeVerificationDate: Date | null;
+    policeVerificationDate: Date;
     trainingCertificateNumber: string;
-    trainingCertificateDate: Date | null;
+    trainingCertificateDate: Date;
     medicalCertificateNumber: string;
-    medicalCertificateDate: Date | null;
-    photoUpload: File | null;
-    aadhaarUpload: File | null;
-    panCardUpload: File | null;
-    bankPassbook: File | null;
-    markSheet: File | null;
-    otherDocument: File | null;
+    medicalCertificateDate: Date;
+    photo: File | null | undefined | string;
+    aadhaar: File | null | undefined | string;
+    panCardUpload: File | null | undefined | string;
+    bankPassbook: File | null | undefined | string;
+    markSheet: File | null | undefined | string;
+    otherDocument: File | null | undefined | string;
     salary: number;
     aadhaarNumber: string;
   }

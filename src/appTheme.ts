@@ -117,7 +117,7 @@ const appTheme = {
   fontFamily: 'SF Pro Display, sans-serif',
   headings: {
     fontFamily: 'SF Pro Display, sans-serif',
-    fontWeight: '500',
+    fontWeight: '900',
     sizes: {
       h1: { lineHeight: '1.22', fontSize: '36px' },
       h2: { lineHeight: '1.21', fontSize: '28px' },

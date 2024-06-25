@@ -113,8 +113,8 @@ const Sidebar = () => {
                 </button>
                 <Collapse in={attendanceOpen}>
                   <div className="pl-10">
-                    <SidebarItem to="/attendance/records" icon={<Document size={24} />} label="Attendance Records" />
-                    <SidebarItem to="/attendance/mark" icon={<Calendar size={24} />} label="Mark Attendance" />
+                    <SidebarItem to="/attendance/records" icon={<Document size={24} />} label="Records" />
+                    <SidebarItem to="/attendance/mark" icon={<Calendar size={24} />} label="Attendance By Site" />
                   </div>
                 </Collapse>
               </div>

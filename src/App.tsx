@@ -5,6 +5,8 @@ import Home from "./components/Home/Home";
 import { MantineProvider, Box } from "@mantine/core";
 import appTheme from "./appTheme";
 import Employee from "./components/Employee/Employee";
+import { RegisterForm } from "./components/Register/register";
+import MarkAttendanceBySite from "./components/Attendance/MarkAttendanceBySite";
 
 const App = () => {
   return (
@@ -19,6 +21,8 @@ const App = () => {
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/employees" element={<Employee />} />
+                  <Route path="/attendance/mark" element={<MarkAttendanceBySite />} />
+                  <Route path="/register" element={<RegisterForm />} />
                 </Routes>
               </div>
             </div>

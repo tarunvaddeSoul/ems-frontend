@@ -1,32 +1,31 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Button,
   Modal,
   TextInput,
   Select,
   NumberInput,
-  Textarea,
   FileInput,
   Grid,
-  Card,
   Text,
   Group,
   Table,
   Container,
   Title,
-  Badge,
   ActionIcon,
   Avatar,
-  Tooltip,
   ThemeIcon,
+  Divider,
+  Stack,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { DatePicker, DatePickerInput } from "@mantine/dates";
+import { DateInput, DatePickerInput } from "@mantine/dates";
 import {
   IconBuilding,
   IconEdit,
   IconTrash,
-  IconUser,
+  IconEye,
+  IconUserPlus,
 } from "@tabler/icons-react";
 import axios from "axios";
 import {
@@ -37,6 +36,9 @@ import {
   Companies,
 } from "./interface/employee.interface";
 import "@mantine/core/styles.css";
+import { PDFViewer, pdf } from "@react-pdf/renderer";
+import EmployeePDF from "./employee.view";
+import { parse } from "date-fns";
 
 const EmployeesPage: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -46,7 +48,12 @@ const EmployeesPage: React.FC = () => {
     EmployeeDepartments[]
   >([]);
   const [companies, setCompanies] = useState<Companies[]>([]);
-
+  const [viewModalOpened, setViewModalOpened] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null
+  );
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const titleData = ["MR", "MS"].map((value) => ({
     value,
     label: value,
@@ -76,17 +83,15 @@ const EmployeesPage: React.FC = () => {
       designationId: "",
       employeeDepartmentId: "",
       mobileNumber: "",
-      companyName: "",
       companyId: "",
       recruitedBy: "",
       gender: "",
       fatherName: "",
       motherName: "",
-      husbandName: null,
+      husbandName: "",
       category: "",
-      dateOfBirth: null,
-      age: 0,
-      dateOfJoining: null,
+      dateOfBirth: new Date(),
+      dateOfJoining: new Date(),
       highestEducationQualification: "",
       bloodGroup: "",
       permanentAddress: "",
@@ -105,13 +110,13 @@ const EmployeesPage: React.FC = () => {
       pfUanNumber: "",
       esicNumber: "",
       policeVerificationNumber: "",
-      policeVerificationDate: null,
+      policeVerificationDate: new Date(),
       trainingCertificateNumber: "",
-      trainingCertificateDate: null,
+      trainingCertificateDate: new Date(),
       medicalCertificateNumber: "",
-      medicalCertificateDate: null,
-      photoUpload: null,
-      aadhaarUpload: null,
+      medicalCertificateDate: new Date(),
+      photo: null,
+      aadhaar: null,
       panCardUpload: null,
       bankPassbook: null,
       markSheet: null,
@@ -180,23 +185,277 @@ const EmployeesPage: React.FC = () => {
       console.error("Error fetching companies:", error);
     }
   };
+
+  const handleView = async (id: string) => {
+    const employee = employees.find((emp) => emp.id === id);
+    if (employee) {
+      setSelectedEmployee(employee);
+      const blob = await pdf(<EmployeePDF employee={employee} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      setViewModalOpened(true);
+      setPdfUrl(url);
+    }
+  };
   const handleEdit = (id: string) => {
-    console.log('Editing')
-    // Handle edit logic
+    const employeeToEdit = employees.find((emp) => emp.id === id);
+    if (employeeToEdit) {
+      const formValues: Partial<EmployeeFormValues> = {
+        title: employeeToEdit.title,
+        firstName: employeeToEdit.firstName,
+        lastName: employeeToEdit.lastName,
+        designationId: employeeToEdit.designationId,
+        employeeDepartmentId: employeeToEdit.employeeDepartmentId,
+        mobileNumber: employeeToEdit.mobileNumber,
+        companyId: employeeToEdit.companyId,
+        recruitedBy: employeeToEdit.recruitedBy,
+        gender: employeeToEdit.gender,
+        fatherName: employeeToEdit.fatherName,
+        motherName: employeeToEdit.motherName,
+        husbandName: employeeToEdit.husbandName,
+        category: employeeToEdit.category,
+        dateOfBirth: parse(
+          employeeToEdit.dateOfBirth as string,
+          "dd-MM-yyyy",
+          new Date()
+        ),
+        dateOfJoining: parse(
+          employeeToEdit.dateOfJoining as string,
+          "dd-MM-yyyy",
+          new Date()
+        ),
+        highestEducationQualification:
+          employeeToEdit.highestEducationQualification,
+        bloodGroup: employeeToEdit.bloodGroup,
+        permanentAddress: employeeToEdit.permanentAddress,
+        presentAddress: employeeToEdit.presentAddress,
+        city: employeeToEdit.city,
+        district: employeeToEdit.district,
+        state: employeeToEdit.state,
+        pincode: employeeToEdit.pincode,
+        referenceName: employeeToEdit.referenceName,
+        referenceAddress: employeeToEdit.referenceAddress,
+        referenceNumber: employeeToEdit.referenceNumber,
+        bankAccountNumber: employeeToEdit.bankAccountNumber,
+        ifscCode: employeeToEdit.ifscCode,
+        bankCity: employeeToEdit.bankCity,
+        bankName: employeeToEdit.bankName,
+        pfUanNumber: employeeToEdit.pfUanNumber,
+        esicNumber: employeeToEdit.esicNumber,
+        policeVerificationNumber: employeeToEdit.policeVerificationNumber,
+        policeVerificationDate: parse(
+          employeeToEdit.policeVerificationDate as string,
+          "dd-MM-yyyy",
+          new Date()
+        ),
+        trainingCertificateNumber: employeeToEdit.trainingCertificateNumber,
+        trainingCertificateDate: parse(
+          employeeToEdit.trainingCertificateDate as string,
+          "dd-MM-yyyy",
+          new Date()
+        ),
+        medicalCertificateNumber: employeeToEdit.medicalCertificateNumber,
+        medicalCertificateDate: parse(
+          employeeToEdit.medicalCertificateDate as string,
+          "dd-MM-yyyy",
+          new Date()
+        ),
+        salary: employeeToEdit.salary,
+        aadhaarNumber: employeeToEdit.aadhaarNumber,
+      };
+
+      form.setValues(formValues);
+      setIsEditing(true);
+      setSelectedEmployee(employeeToEdit);
+      setOpened(true);
+    }
+  };
+
+  const handleEditSubmit = async (values: EmployeeFormValues) => {
+    try {
+      const formData = new FormData();
+      const originalEmployee = employees.find(
+        (emp) => emp.id === selectedEmployee?.id
+      );
+
+      if (!originalEmployee) {
+        console.error("Original employee not found");
+        return;
+      }
+
+      // Compare and add only changed fields
+      Object.entries(values).forEach(([key, value]) => {
+        if (value instanceof Date) {
+          const formattedDate = `${value
+            .getDate()
+            .toString()
+            .padStart(2, "0")}-${(value.getMonth() + 1)
+            .toString()
+            .padStart(2, "0")}-${value.getFullYear()}`;
+          if (formattedDate !== (originalEmployee as any)[key]) {
+            formData.append(key, formattedDate);
+          }
+        } else if (value instanceof File) {
+          formData.append(key, value);
+        } else if (value !== (originalEmployee as any)[key]) {
+          formData.append(key, String(value));
+        }
+      });
+
+      if (formData.entries().next().done) {
+        console.log("No changes detected");
+        setOpened(false);
+        return;
+      }
+
+      const response = await axios.put(
+        `http://localhost:3003/employees/${selectedEmployee?.id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Employee updated successfully", response.data);
+      setOpened(false);
+      fetchEmployees(); // Refresh the employee list
+    } catch (error) {
+      console.error("Error updating employee", error);
+    }
   };
 
   const handleDelete = (id: string) => {
-    console.log('Deleting')
+    console.log("Deleting");
     // Handle delete logic
   };
 
-  const handleCreate = () => {
-    // Handle create logic
-  };
-  const handleSubmit = (values: EmployeeFormValues) => {
-    console.log(values);
-    // Here you would typically send a POST request to create the employee
-    setOpened(false);
+  const handleSubmit = async (values: EmployeeFormValues) => {
+    try {
+      console.log("hii");
+      console.log(
+        `${values.trainingCertificateDate
+          .getDate()
+          .toString()
+          .padStart(2, "0")}-${(values.trainingCertificateDate.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}-${values.trainingCertificateDate.getFullYear()}`
+      );
+      const formData = new FormData();
+
+      formData.append("title", values.title);
+      formData.append("firstName", values.firstName);
+      formData.append("lastName", values.lastName);
+      formData.append("designationId", values.designationId);
+      formData.append("employeeDepartmentId", values.employeeDepartmentId);
+      formData.append("mobileNumber", values.mobileNumber);
+      formData.append("companyId", values.companyId);
+      formData.append("recruitedBy", values.recruitedBy);
+      formData.append("gender", values.gender);
+      formData.append("fatherName", values.fatherName);
+      formData.append("motherName", values.motherName);
+      formData.append("husbandName", values.husbandName || "");
+      formData.append("category", values.category);
+      formData.append(
+        "dateOfBirth",
+        `${values.dateOfBirth.getDate().toString().padStart(2, "0")}-${(
+          values.dateOfBirth.getMonth() + 1
+        )
+          .toString()
+          .padStart(2, "0")}-${values.dateOfBirth.getFullYear()}`
+      );
+      formData.append(
+        "dateOfJoining",
+        `${values.dateOfJoining.getDate().toString().padStart(2, "0")}-${(
+          values.dateOfJoining.getMonth() + 1
+        )
+          .toString()
+          .padStart(2, "0")}-${values.dateOfJoining.getFullYear()}`
+      );
+      formData.append(
+        "highestEducationQualification",
+        values.highestEducationQualification
+      );
+      formData.append("bloodGroup", values.bloodGroup);
+      formData.append("permanentAddress", values.permanentAddress);
+      formData.append("presentAddress", values.presentAddress);
+      formData.append("city", values.city);
+      formData.append("district", values.district);
+      formData.append("state", values.state);
+      formData.append("pincode", values.pincode.toString());
+      formData.append("referenceName", values.referenceName);
+      formData.append("referenceAddress", values.referenceAddress);
+      formData.append("referenceNumber", values.referenceNumber);
+      formData.append("bankAccountNumber", values.bankAccountNumber);
+      formData.append("ifscCode", values.ifscCode);
+      formData.append("bankCity", values.bankCity);
+      formData.append("bankName", values.bankName);
+      formData.append("pfUanNumber", values.pfUanNumber);
+      formData.append("esicNumber", values.esicNumber);
+      formData.append(
+        "policeVerificationNumber",
+        values.policeVerificationNumber
+      );
+      formData.append(
+        "policeVerificationDate",
+        `${values.policeVerificationDate
+          .getDate()
+          .toString()
+          .padStart(2, "0")}-${(values.policeVerificationDate.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}-${values.policeVerificationDate.getFullYear()}`
+      );
+      formData.append(
+        "trainingCertificateNumber",
+        values.trainingCertificateNumber
+      );
+      formData.append(
+        "trainingCertificateDate",
+        `${values.trainingCertificateDate
+          .getDate()
+          .toString()
+          .padStart(2, "0")}-${(values.trainingCertificateDate.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}-${values.trainingCertificateDate.getFullYear()}`
+      );
+      formData.append(
+        "medicalCertificateNumber",
+        values.medicalCertificateNumber
+      );
+      formData.append(
+        "medicalCertificateDate",
+        `${values.medicalCertificateDate
+          .getDate()
+          .toString()
+          .padStart(2, "0")}-${(values.medicalCertificateDate.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}-${values.medicalCertificateDate.getFullYear()}`
+      );
+      formData.append("photo", values.photo as any);
+      formData.append("aadhaar", values.aadhaar as any);
+      formData.append("panCardUpload", values.panCardUpload as any);
+      formData.append("bankPassbook", values.bankPassbook as any);
+      formData.append("markSheet", values.markSheet as any);
+      formData.append("otherDocument", values.otherDocument as any);
+      formData.append("salary", values.salary.toString());
+      formData.append("aadhaarNumber", values.aadhaarNumber);
+
+      const response = await axios.post(
+        "http://localhost:3003/employees/",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Employee created successfully", response.data);
+      // Close the form modal or reset the form if needed
+      setOpened(false);
+    } catch (error) {
+      console.error("Error creating employee", error);
+    }
   };
   const rows = employees.map((employee) => (
     <Table.Tr key={employee.id}>
@@ -220,15 +479,47 @@ const EmployeesPage: React.FC = () => {
           <ThemeIcon size="sm" variant="light" color="blue">
             <IconBuilding size="0.8rem" />
           </ThemeIcon>
-          <Text size="sm">{employee.companyName}</Text>
+          <Text size="sm">{employee.designationName}</Text>
         </Group>
       </Table.Td>
       <Table.Td>
+        <Group gap="xs">
+          <ThemeIcon size="sm" variant="light" color="blue">
+            <IconBuilding size="0.8rem" />
+          </ThemeIcon>
+          <Text size="sm">{employee.employeeDepartmentName}</Text>
+        </Group>
+      </Table.Td>
+      <Table.Td>
+        <Group gap="xs">
+          <ThemeIcon size="sm" variant="light" color="blue">
+            <IconBuilding size="0.8rem" />
+          </ThemeIcon>
+          <Text size="sm">{employee.companyName}</Text>
+        </Group>
+      </Table.Td>
+
+      <Table.Td>
         <Group gap="xs" justify="flex-end">
-          <ActionIcon variant="subtle" color="blue" onClick={() => handleEdit(employee.id)}>
+          <ActionIcon
+            variant="subtle"
+            color="yellow"
+            onClick={() => handleView(employee.id)}
+          >
+            <IconEye size="1rem" />
+          </ActionIcon>
+          <ActionIcon
+            variant="subtle"
+            color="blue"
+            onClick={() => handleEdit(employee.id)}
+          >
             <IconEdit size="1rem" />
           </ActionIcon>
-          <ActionIcon variant="subtle" color="red" onClick={() => handleDelete(employee.id)}>
+          <ActionIcon
+            variant="subtle"
+            color="red"
+            onClick={() => handleDelete(employee.id)}
+          >
             <IconTrash size="1rem" />
           </ActionIcon>
         </Group>
@@ -240,7 +531,16 @@ const EmployeesPage: React.FC = () => {
     <Container size="xl">
       <Group justify="space-between" mb="xl">
         <Title order={2}>Employees</Title>
-        <Button onClick={() => setOpened(true)}>Create Employee</Button>
+        <Button
+          leftSection={<IconUserPlus size={20} />}
+          onClick={() => {
+            form.reset();
+            setIsEditing(false);
+            setOpened(true);
+          }}
+        >
+          Create Employee
+        </Button>
       </Group>
 
       <Table
@@ -253,372 +553,41 @@ const EmployeesPage: React.FC = () => {
         <Table.Thead>
           <Table.Tr>
             <Table.Th>Employee</Table.Th>
-            <Table.Th>Company</Table.Th>
+            <Table.Th>Designation</Table.Th>
+            <Table.Th>Department</Table.Th>
+            <Table.Th>Site</Table.Th>
             <Table.Th>Actions</Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>{rows}</Table.Tbody>
       </Table>
+
       <Modal
         opened={opened}
         onClose={() => setOpened(false)}
-        title="Create Employee"
         size="xl"
+        title={
+          <div style={{ display: "flex", alignItems: "center" }}>
+            {selectedEmployee ? (
+              <IconEdit size={24} style={{ marginRight: "10px" }} />
+            ) : (
+              <IconUserPlus size={24} style={{ marginRight: "10px" }} />
+            )}
+            <Text>
+              {selectedEmployee ? "Edit Employee" : "Create Employee"}
+            </Text>
+          </div>
+        }
       >
-        {/* <form onSubmit={form.onSubmit(handleSubmit)}>
-          <Grid>
-            <Grid.Col span={4}>
-              <Select
-                label="Title"
-                placeholder="Select title"
-                data={titleData}
-                {...form.getInputProps("title")}
-              />
-            </Grid.Col>
-            <Grid.Col span={4}>
-              <TextInput
-                label="First Name"
-                placeholder="Enter first name"
-                {...form.getInputProps("firstName")}
-              />
-            </Grid.Col>
-            <Grid.Col span={4}>
-              <TextInput
-                label="Last Name"
-                placeholder="Enter last name"
-                {...form.getInputProps("lastName")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <DatePickerInput
-                label="Date of Birth"
-                placeholder="Select date"
-                {...form.getInputProps("dateOfBirth")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <DatePickerInput
-                label="Date of Joining"
-                placeholder="Select date"
-                {...form.getInputProps("dateOfJoining")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <Select
-                label="Gender"
-                placeholder="Select gender"
-                data={genderData}
-                {...form.getInputProps("gender")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <Select
-                label="Category"
-                placeholder="Select category"
-                data={categoryData}
-                {...form.getInputProps("category")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Mobile Number"
-                placeholder="Enter mobile number"
-                {...form.getInputProps("mobileNumber")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Aadhaar Number"
-                placeholder="Enter Aadhaar number"
-                {...form.getInputProps("aadhaarNumber")}
-              />
-            </Grid.Col>
-            <Grid.Col span={12}>
-              <NumberInput
-                label="Salary"
-                placeholder="Enter salary"
-                {...form.getInputProps("salary")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <FileInput
-                label="Photo Upload"
-                placeholder="Upload photo"
-                {...form.getInputProps("photoUpload")}
-                accept="image/*"
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <FileInput
-                label="Aadhaar Upload"
-                placeholder="Upload Aadhaar"
-                {...form.getInputProps("aadhaarUpload")}
-                accept="application/pdf,image/*"
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <Select
-                label="Highest Education Qualification"
-                placeholder="Select qualification"
-                data={educationQualificationData}
-                {...form.getInputProps("highestEducationQualification")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <Select
-                label="Designation"
-                placeholder="Select designation"
-                data={designations.map((designation) => ({
-                  value: designation.id,
-                  label: designation.name,
-                }))}
-                {...form.getInputProps("designationId")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <Select
-                label="Employee Department"
-                placeholder="Select department"
-                data={employeeDepartments.map((department) => ({
-                  value: department.id,
-                  label: department.name,
-                }))}
-                {...form.getInputProps("employeeDepartmentId")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <Select
-                label="Company"
-                placeholder="Select company"
-                data={companies.map((company) => ({
-                  value: company.id,
-                  label: company.name,
-                }))}
-                {...form.getInputProps("companyId")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Recruited By"
-                placeholder="Enter recruiter name"
-                {...form.getInputProps("recruitedBy")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Father's Name"
-                placeholder="Enter father's name"
-                {...form.getInputProps("fatherName")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Mother's Name"
-                placeholder="Enter mother's name"
-                {...form.getInputProps("motherName")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Husband's Name"
-                placeholder="Enter husband's name"
-                {...form.getInputProps("husbandName")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Blood Group"
-                placeholder="Enter blood group"
-                {...form.getInputProps("bloodGroup")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Permanent Address"
-                placeholder="Enter permanent address"
-                {...form.getInputProps("permanentAddress")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Present Address"
-                placeholder="Enter present address"
-                {...form.getInputProps("presentAddress")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="City"
-                placeholder="Enter city"
-                {...form.getInputProps("city")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="District"
-                placeholder="Enter district"
-                {...form.getInputProps("district")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="State"
-                placeholder="Enter state"
-                {...form.getInputProps("state")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <NumberInput
-                label="Pincode"
-                placeholder="Enter pincode"
-                {...form.getInputProps("pincode")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Reference Name"
-                placeholder="Enter reference name"
-                {...form.getInputProps("referenceName")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Reference Address"
-                placeholder="Enter reference address"
-                {...form.getInputProps("referenceAddress")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Reference Number"
-                placeholder="Enter reference number"
-                {...form.getInputProps("referenceNumber")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Bank Account Number"
-                placeholder="Enter bank account number"
-                {...form.getInputProps("bankAccountNumber")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="IFSC Code"
-                placeholder="Enter IFSC code"
-                {...form.getInputProps("ifscCode")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Bank City"
-                placeholder="Enter bank city"
-                {...form.getInputProps("bankCity")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Bank Name"
-                placeholder="Enter bank name"
-                {...form.getInputProps("bankName")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="PF UAN Number"
-                placeholder="Enter PF UAN number"
-                {...form.getInputProps("pfUanNumber")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="ESIC Number"
-                placeholder="Enter ESIC number"
-                {...form.getInputProps("esicNumber")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Police Verification Number"
-                placeholder="Enter police verification number"
-                {...form.getInputProps("policeVerificationNumber")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <DatePickerInput
-                label="Police Verification Date"
-                placeholder="Select date"
-                {...form.getInputProps("policeVerificationDate")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Training Certificate Number"
-                placeholder="Enter training certificate number"
-                {...form.getInputProps("trainingCertificateNumber")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <DatePickerInput
-                label="Training Certificate Date"
-                placeholder="Select date"
-                {...form.getInputProps("trainingCertificateDate")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <TextInput
-                label="Medical Certificate Number"
-                placeholder="Enter medical certificate number"
-                {...form.getInputProps("medicalCertificateNumber")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <DatePickerInput
-                label="Medical Certificate Date"
-                placeholder="Select date"
-                {...form.getInputProps("medicalCertificateDate")}
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <FileInput
-                label="PAN Card Upload"
-                placeholder="Upload PAN card"
-                {...form.getInputProps("panCardUpload")}
-                accept="application/pdf,image/*"
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <FileInput
-                label="Bank Passbook"
-                placeholder="Upload bank passbook"
-                {...form.getInputProps("bankPassbook")}
-                accept="application/pdf,image/*"
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <FileInput
-                label="Mark Sheet"
-                placeholder="Upload mark sheet"
-                {...form.getInputProps("markSheet")}
-                accept="application/pdf,image/*"
-              />
-            </Grid.Col>
-            <Grid.Col span={6}>
-              <FileInput
-                label="Other Document"
-                placeholder="Upload other document"
-                {...form.getInputProps("otherDocument")}
-                accept="application/pdf,image/*"
-              />
-            </Grid.Col>
-          </Grid>
+        <Divider labelPosition="center" my="lg" />
 
-          <Group justify="flex-end" mt="md">
-            <Button type="submit">Submit</Button>
-          </Group>
-        </form> */}
-
-        <form onSubmit={form.onSubmit(handleSubmit)}>
+        <form
+          onSubmit={form.onSubmit((values) =>
+            selectedEmployee
+              ? handleEditSubmit(values as unknown as EmployeeFormValues)
+              : handleSubmit(values as unknown as EmployeeFormValues)
+          )}
+        >
           <Title order={3} mb="md">
             Basic Details
           </Title>
@@ -653,6 +622,8 @@ const EmployeesPage: React.FC = () => {
                 label="Date of Birth"
                 required
                 placeholder="Select date"
+                mx="auto"
+                maw={400}
                 {...form.getInputProps("dateOfBirth")}
               />
             </Grid.Col>
@@ -698,6 +669,7 @@ const EmployeesPage: React.FC = () => {
               />
             </Grid.Col>
           </Grid>
+          <Divider labelPosition="center" my="lg" />
 
           <Title order={3} mt="xl" mb="md">
             Contact Details
@@ -768,6 +740,7 @@ const EmployeesPage: React.FC = () => {
               />
             </Grid.Col>
           </Grid>
+          <Divider labelPosition="center" my="lg" />
 
           <Title order={3} mt="xl" mb="md">
             Employment Details
@@ -852,6 +825,7 @@ const EmployeesPage: React.FC = () => {
               />
             </Grid.Col>
           </Grid>
+          <Divider labelPosition="center" my="lg" />
 
           <Title order={3} mt="xl" mb="md">
             Bank Details
@@ -890,6 +864,7 @@ const EmployeesPage: React.FC = () => {
               />
             </Grid.Col>
           </Grid>
+          <Divider labelPosition="center" my="lg" />
 
           <Title order={3} mt="xl" mb="md">
             Additional Details
@@ -960,6 +935,7 @@ const EmployeesPage: React.FC = () => {
               />
             </Grid.Col>
           </Grid>
+          <Divider labelPosition="center" my="lg" />
 
           <Title order={3} mt="xl" mb="md">
             Reference Details
@@ -990,6 +966,7 @@ const EmployeesPage: React.FC = () => {
               />
             </Grid.Col>
           </Grid>
+          <Divider labelPosition="center" my="lg" />
 
           <Title order={3} mt="xl" mb="md">
             Document Uploads
@@ -1000,7 +977,7 @@ const EmployeesPage: React.FC = () => {
                 label="Photo Upload"
                 required
                 placeholder="Upload photo"
-                {...form.getInputProps("photoUpload")}
+                {...form.getInputProps("photo")}
                 accept="image/*"
               />
             </Grid.Col>
@@ -1009,7 +986,7 @@ const EmployeesPage: React.FC = () => {
                 label="Aadhaar Upload"
                 required
                 placeholder="Upload Aadhaar"
-                {...form.getInputProps("aadhaarUpload")}
+                {...form.getInputProps("aadhaar")}
                 accept="application/pdf,image/*"
               />
             </Grid.Col>
@@ -1055,6 +1032,35 @@ const EmployeesPage: React.FC = () => {
             <Button type="submit">Submit</Button>
           </Group>
         </form>
+      </Modal>
+      <Modal
+        opened={viewModalOpened}
+        onClose={() => {
+          setViewModalOpened(false);
+          if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+          setPdfUrl(null);
+        }}
+        size="xl"
+        title="Employee Details"
+      >
+        {pdfUrl && (
+          <>
+            <iframe
+              src={pdfUrl}
+              style={{ width: "100%", height: "500px", border: "none" }}
+            />
+            <Group mt="md">
+              <Button onClick={() => setViewModalOpened(false)}>Close</Button>
+              <Button
+                component="a"
+                href={pdfUrl}
+                download={`employee_${selectedEmployee?.id}.pdf`}
+              >
+                Download PDF
+              </Button>
+            </Group>
+          </>
+        )}
       </Modal>
     </Container>
   );
