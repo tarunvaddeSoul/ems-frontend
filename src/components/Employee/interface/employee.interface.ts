@@ -32,7 +32,7 @@ export interface IEmployee {
     dateOfBirth?: string;
     age?: number;
     dateOfJoining?: string;
-    highestEducationQualification?: EducationQualification;
+    highestEducationQualification?: EducationQualification | undefined;
     bloodGroup?: string;
     permanentAddress?: string;
     presentAddress?: string;

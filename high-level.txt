@@ -1,0 +1,18 @@
+- Dashboard
+- Employees
+  |- List Employees
+  |- Add Employee
+  |- Edit Employee
+  |- Advanced Search  <-- New item
+- Companies
+  |- List Companies
+  |- Add Company
+  |- Edit Company
+- Attendance
+  |- Mark Attendance
+  |- Upload Attendance Sheet
+  |- View Attendance Records
+- Reports
+  |- Employee Reports
+  |- Company Reports
+  |- Attendance Reports

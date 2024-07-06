@@ -1,90 +1,564 @@
-import React from 'react';
-import { useForm } from '@mantine/form';
-import { TextInput, Button, Stack, Group } from '@mantine/core';
+import React from "react";
+import {
+  TextInput,
+  Select,
+  NumberInput,
+  FileInput,
+  Grid,
+  Title,
+  Divider,
+  Button,
+  Group,
+  Box,
+  ScrollArea,
+} from "@mantine/core";
+import { DatePickerInput } from "@mantine/dates";
+import { useForm } from "@mantine/form";
+import { IconUpload } from "@tabler/icons-react";
+import { EmployeeFormValues } from "./interface/employee.interface";
 
-function EmployeeForm() {
-  const form = useForm({
+interface EmployeeFormProps {
+  initialValues?: Partial<EmployeeFormValues>;
+  onSubmit: (values: EmployeeFormValues) => void;
+  designations: { value: string; label: string }[];
+  employeeDepartments: { value: string; label: string }[];
+  companies: { value: string; label: string }[];
+}
+
+const EmployeeForm: React.FC<EmployeeFormProps> = ({
+  initialValues,
+  onSubmit,
+  designations,
+  employeeDepartments,
+  companies,
+}) => {
+  const form = useForm<EmployeeFormValues>({
     initialValues: {
-      title: '',
-      firstName: '',
-      lastName: '',
-      designationId: '',
-      departmentId: '',
-      mobileNumber: '',
-      companyName: '',
-      companyId: '',
-      recruitedBy: '',
+      title: "",
+      firstName: "",
+      lastName: "",
+      designationId: "",
+      employeeDepartmentId: "",
+      mobileNumber: "",
+      companyId: "",
+      recruitedBy: "",
+      gender: "",
+      fatherName: "",
+      motherName: "",
+      husbandName: "",
+      category: "",
+      dateOfBirth: new Date(),
+      dateOfJoining: new Date(),
+      highestEducationQualification: "",
+      bloodGroup: "",
+      permanentAddress: "",
+      presentAddress: "",
+      city: "",
+      district: "",
+      state: "",
+      pincode: 0,
+      referenceName: "",
+      referenceAddress: "",
+      referenceNumber: "",
+      bankAccountNumber: "",
+      ifscCode: "",
+      bankCity: "",
+      bankName: "",
+      pfUanNumber: "",
+      esicNumber: "",
+      policeVerificationNumber: "",
+      policeVerificationDate: new Date(),
+      trainingCertificateNumber: "",
+      trainingCertificateDate: new Date(),
+      medicalCertificateNumber: "",
+      medicalCertificateDate: new Date(),
+      photo: null,
+      aadhaar: null,
+      panCardUpload: null,
+      bankPassbook: null,
+      markSheet: null,
+      otherDocument: null,
+      salary: 0,
+      aadhaarNumber: "",
+      ...initialValues,
     },
-
     validate: {
-      firstName: (value) => (value.length < 2 ? 'First name must have at least 2 letters' : null),
-      lastName: (value) => (value.length < 2 ? 'Last name must have at least 2 letters' : null),
-      mobileNumber: (value) => (/^\d{10}$/.test(value) ? null : 'Invalid mobile number'),
+      firstName: (value) => (value ? null : "First Name is required"),
+      lastName: (value) => (value ? null : "Last Name is required"),
+      mobileNumber: (value) =>
+        /^\d{10}$/.test(value) ? null : "Invalid mobile number",
+      aadhaarNumber: (value) =>
+        /^\d{12}$/.test(value) ? null : "Invalid Aadhaar number",
+      salary: (value) => (value > 0 ? null : "Salary must be greater than 0"),
     },
   });
 
-  const handleSubmit = (values: any) => {
-    console.log(values);
-    // Perform the API call to create the employee
-  };
+  const titleData = ["MR", "MS"].map((value) => ({ value, label: value }));
+  const genderData = ["MALE", "FEMALE"].map((value) => ({
+    value,
+    label: value,
+  }));
+  const categoryData = ["SC", "ST", "OBC", "GENERAL"].map((value) => ({
+    value,
+    label: value,
+  }));
+  const educationQualificationData = [
+    "UNDER_8",
+    "EIGHT",
+    "TEN",
+    "TWELVE",
+    "GRADUATE",
+    "POST_GRADUATE",
+  ].map((value) => ({ value, label: value }));
 
   return (
-    <form onSubmit={form.onSubmit(handleSubmit)}>
-      <Stack style={{ gap: '2.5rem' }}>
-        <TextInput
-          label="Title"
-          placeholder="Mr./Ms."
-          {...form.getInputProps('title')}
-        />
-        <TextInput
-          label="First Name"
-          placeholder="First Name"
-          required
-          {...form.getInputProps('firstName')}
-        />
-        <TextInput
-          label="Last Name"
-          placeholder="Last Name"
-          required
-          {...form.getInputProps('lastName')}
-        />
-        <TextInput
-          label="Designation ID"
-          placeholder="Designation ID"
-          {...form.getInputProps('designationId')}
-        />
-        <TextInput
-          label="Department ID"
-          placeholder="Department ID"
-          {...form.getInputProps('departmentId')}
-        />
-        <TextInput
-          label="Mobile Number"
-          placeholder="Mobile Number"
-          required
-          {...form.getInputProps('mobileNumber')}
-        />
-        <TextInput
-          label="Company Name"
-          placeholder="Company Name"
-          {...form.getInputProps('companyName')}
-        />
-        <TextInput
-          label="Company ID"
-          placeholder="Company ID"
-          {...form.getInputProps('companyId')}
-        />
-        <TextInput
-          label="Recruited By"
-          placeholder="Recruited By"
-          {...form.getInputProps('recruitedBy')}
-        />
-      </Stack>
-      <Group mt="md">
-        <Button type="submit">Create Employee</Button>
-      </Group>
-    </form>
+    <ScrollArea h={1000} scrollbars="y">
+      <form onSubmit={form.onSubmit(onSubmit)}>
+        <Title order={3} mb="md">
+          Basic Details
+        </Title>
+        <Grid>
+          <Grid.Col span={4}>
+            <Select
+              label="Title"
+              required
+              placeholder="Select title"
+              data={titleData}
+              {...form.getInputProps("title")}
+            />
+          </Grid.Col>
+          <Grid.Col span={4}>
+            <TextInput
+              label="First Name"
+              required
+              placeholder="Enter first name"
+              {...form.getInputProps("firstName")}
+            />
+          </Grid.Col>
+          <Grid.Col span={4}>
+            <TextInput
+              label="Last Name"
+              required
+              placeholder="Enter last name"
+              {...form.getInputProps("lastName")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <DatePickerInput
+              label="Date of Birth"
+              required
+              placeholder="Select date"
+              {...form.getInputProps("dateOfBirth")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <Select
+              label="Gender"
+              required
+              placeholder="Select gender"
+              data={genderData}
+              {...form.getInputProps("gender")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Father's Name"
+              required
+              placeholder="Enter father's name"
+              {...form.getInputProps("fatherName")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Mother's Name"
+              required
+              placeholder="Enter mother's name"
+              {...form.getInputProps("motherName")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Husband's Name"
+              required
+              placeholder="Enter husband's name"
+              {...form.getInputProps("husbandName")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Blood Group"
+              required
+              placeholder="Enter blood group"
+              {...form.getInputProps("bloodGroup")}
+            />
+          </Grid.Col>
+        </Grid>
+
+        <Divider my="lg" />
+
+        <Title order={3} mt="xl" mb="md">
+          Contact Details
+        </Title>
+        <Grid>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Mobile Number"
+              required
+              placeholder="Enter mobile number"
+              {...form.getInputProps("mobileNumber")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Aadhaar Number"
+              required
+              placeholder="Enter Aadhaar number"
+              {...form.getInputProps("aadhaarNumber")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Permanent Address"
+              required
+              placeholder="Enter permanent address"
+              {...form.getInputProps("permanentAddress")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Present Address"
+              required
+              placeholder="Enter present address"
+              {...form.getInputProps("presentAddress")}
+            />
+          </Grid.Col>
+          <Grid.Col span={3}>
+            <TextInput
+              label="City"
+              required
+              placeholder="Enter city"
+              {...form.getInputProps("city")}
+            />
+          </Grid.Col>
+          <Grid.Col span={3}>
+            <TextInput
+              label="District"
+              required
+              placeholder="Enter district"
+              {...form.getInputProps("district")}
+            />
+          </Grid.Col>
+          <Grid.Col span={3}>
+            <TextInput
+              label="State"
+              required
+              placeholder="Enter state"
+              {...form.getInputProps("state")}
+            />
+          </Grid.Col>
+          <Grid.Col span={3}>
+            <NumberInput
+              label="Pincode"
+              required
+              placeholder="Enter pincode"
+              {...form.getInputProps("pincode")}
+            />
+          </Grid.Col>
+        </Grid>
+
+        <Divider my="lg" />
+
+        <Title order={3} mt="xl" mb="md">
+          Employment Details
+        </Title>
+        <Grid>
+          <Grid.Col span={6}>
+            <DatePickerInput
+              label="Date of Joining"
+              required
+              placeholder="Select date"
+              {...form.getInputProps("dateOfJoining")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <Select
+              label="Category"
+              required
+              placeholder="Select category"
+              data={categoryData}
+              {...form.getInputProps("category")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <NumberInput
+              label="Salary"
+              required
+              placeholder="Enter salary"
+              {...form.getInputProps("salary")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <Select
+              label="Highest Education Qualification"
+              required
+              placeholder="Select qualification"
+              data={educationQualificationData}
+              {...form.getInputProps("highestEducationQualification")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <Select
+              label="Designation"
+              required
+              placeholder="Select designation"
+              data={designations}
+              {...form.getInputProps("designationId")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <Select
+              label="Employee Department"
+              required
+              placeholder="Select department"
+              data={employeeDepartments}
+              {...form.getInputProps("employeeDepartmentId")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <Select
+              label="Company"
+              required
+              placeholder="Select company"
+              data={companies}
+              {...form.getInputProps("companyId")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Recruited By"
+              required
+              placeholder="Enter recruiter name"
+              {...form.getInputProps("recruitedBy")}
+            />
+          </Grid.Col>
+        </Grid>
+
+        <Divider my="lg" />
+
+        <Title order={3} mt="xl" mb="md">
+          Bank Details
+        </Title>
+        <Grid>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Bank Account Number"
+              required
+              placeholder="Enter bank account number"
+              {...form.getInputProps("bankAccountNumber")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="IFSC Code"
+              required
+              placeholder="Enter IFSC code"
+              {...form.getInputProps("ifscCode")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Bank Name"
+              required
+              placeholder="Enter bank name"
+              {...form.getInputProps("bankName")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Bank City"
+              required
+              placeholder="Enter bank city"
+              {...form.getInputProps("bankCity")}
+            />
+          </Grid.Col>
+        </Grid>
+
+        <Divider my="lg" />
+
+        <Title order={3} mt="xl" mb="md">
+          Additional Details
+        </Title>
+        <Grid>
+          <Grid.Col span={6}>
+            <TextInput
+              label="PF UAN Number"
+              required
+              placeholder="Enter PF UAN number"
+              {...form.getInputProps("pfUanNumber")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="ESIC Number"
+              required
+              placeholder="Enter ESIC number"
+              {...form.getInputProps("esicNumber")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Police Verification Number"
+              required
+              placeholder="Enter police verification number"
+              {...form.getInputProps("policeVerificationNumber")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <DatePickerInput
+              label="Police Verification Date"
+              required
+              placeholder="Select date"
+              {...form.getInputProps("policeVerificationDate")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Training Certificate Number"
+              required
+              placeholder="Enter training certificate number"
+              {...form.getInputProps("trainingCertificateNumber")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <DatePickerInput
+              label="Training Certificate Date"
+              required
+              placeholder="Select date"
+              {...form.getInputProps("trainingCertificateDate")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Medical Certificate Number"
+              required
+              placeholder="Enter medical certificate number"
+              {...form.getInputProps("medicalCertificateNumber")}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <DatePickerInput
+              label="Medical Certificate Date"
+              required
+              placeholder="Select date"
+              {...form.getInputProps("medicalCertificateDate")}
+            />
+          </Grid.Col>
+        </Grid>
+        <Divider labelPosition="center" my="lg" />
+
+        <Title order={3} mt="xl" mb="md">
+          Reference Details
+        </Title>
+        <Grid>
+          <Grid.Col span={4}>
+            <TextInput
+              label="Reference Name"
+              required
+              placeholder="Enter reference name"
+              {...form.getInputProps("referenceName")}
+            />
+          </Grid.Col>
+          <Grid.Col span={4}>
+            <TextInput
+              label="Reference Address"
+              required
+              placeholder="Enter reference address"
+              {...form.getInputProps("referenceAddress")}
+            />
+          </Grid.Col>
+          <Grid.Col span={4}>
+            <TextInput
+              label="Reference Number"
+              required
+              placeholder="Enter reference number"
+              {...form.getInputProps("referenceNumber")}
+            />
+          </Grid.Col>
+        </Grid>
+        <Divider labelPosition="center" my="lg" />
+
+        <Title order={3} mt="xl" mb="md">
+          Document Uploads
+        </Title>
+        <Grid>
+          <Grid.Col span={6}>
+            <FileInput
+              label="Photo Upload"
+              leftSection={<IconUpload size={14} />}
+              required
+              placeholder="Upload photo"
+              {...form.getInputProps("photo")}
+              accept="image/*"
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <FileInput
+              label="Aadhaar Upload"
+              leftSection={<IconUpload size={14} />}
+              required
+              placeholder="Upload Aadhaar"
+              {...form.getInputProps("aadhaar")}
+              accept="application/pdf,image/*"
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <FileInput
+              label="PAN Card Upload"
+              leftSection={<IconUpload size={14} />}
+              required
+              placeholder="Upload PAN card"
+              {...form.getInputProps("panCardUpload")}
+              accept="application/pdf,image/*"
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <FileInput
+              label="Bank Passbook"
+              leftSection={<IconUpload size={14} />}
+              required
+              placeholder="Upload bank passbook"
+              {...form.getInputProps("bankPassbook")}
+              accept="application/pdf,image/*"
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <FileInput
+              label="Mark Sheet"
+              leftSection={<IconUpload size={14} />}
+              required
+              placeholder="Upload mark sheet"
+              {...form.getInputProps("markSheet")}
+              accept="application/pdf,image/*"
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <FileInput
+              label="Other Document"
+              leftSection={<IconUpload size={14} />}
+              required
+              placeholder="Upload other document"
+              {...form.getInputProps("otherDocument")}
+              accept="application/pdf,image/*"
+            />
+          </Grid.Col>
+        </Grid>
+
+        <Group justify="flex-end" mt="xl">
+          <Button type="submit">Submit</Button>
+        </Group>
+      </form>
+    </ScrollArea>
   );
-}
+};
 
 export default EmployeeForm;

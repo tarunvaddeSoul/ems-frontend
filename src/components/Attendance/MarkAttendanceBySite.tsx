@@ -6,17 +6,24 @@ import {
   Group,
   Select,
   Table,
-  NumberInput,
-  FileInput,
   Container,
-  Title,
   Paper,
   Text,
   LoadingOverlay,
+  Checkbox,
+  Alert,
+  Title,
+  ThemeIcon,
+  Stack,
+  FileInput,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconUpload } from "@tabler/icons-react";
+import { IconAlertCircle, IconCheck, IconUpload } from "@tabler/icons-react";
 import { Employee } from "../Employee/interface/employee.interface";
+import { MonthPicker } from "@mantine/dates";
+import dayjs from "dayjs";
+import "@mantine/core/styles.css";
+
 interface Company {
   id: string;
   name: string;
@@ -27,16 +34,26 @@ const MarkAttendanceBySite: React.FC = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
+  const [value, setValue] = useState<Date | null>(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const form = useForm({
     initialValues: {
       companyId: "",
-      attendance: {} as Record<string, number>,
-      attendanceSheet: null as File | null,
+      month: "",
+      attendance: {} as Record<
+        string,
+        { selected: boolean; presentCount: string }
+      >,
+      file: null as File | null,
     },
     validate: (values) => {
       if (active === 0 && !values.companyId) {
         return { companyId: "Please select a company" };
+      }
+      if (active === 1 && !values.month) {
+        return { month: "Please select a month" };
       }
       return {};
     },
@@ -48,13 +65,15 @@ const MarkAttendanceBySite: React.FC = () => {
 
   const fetchCompanies = async () => {
     setLoading(true);
+    setErrorMessage('');
     try {
-      const response = await axios.get<{ data: Company[] }>(
+      const response = await axios.get(
         "http://localhost:3003/companies"
       );
-      setCompanies(response.data.data);
+      setCompanies(response.data.data.companies);
     } catch (error) {
       console.error("Error fetching companies:", error);
+      setErrorMessage('Failed to fetch companies. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -62,69 +81,117 @@ const MarkAttendanceBySite: React.FC = () => {
 
   const fetchEmployees = async (companyId: string) => {
     setLoading(true);
+    setErrorMessage('');
     try {
-      const response = await axios.get<{ data: Employee[] }>(
+      const response = await axios.get(
         "http://localhost:3003/employees"
       );
-      const filteredEmployees = response.data.data.filter(
-        (emp) => emp.companyId === companyId
+      const filteredEmployees = response.data.data.data.filter(
+        (emp: any) => emp.companyId === companyId
       );
       setEmployees(filteredEmployees);
-      const initialAttendance = filteredEmployees.reduce((acc, emp) => {
-        acc[emp.id] = 0;
+      const initialAttendance = filteredEmployees.reduce((acc: any, emp: any) => {
+        acc[emp.id] = { selected: false, presentCount: "0" };
         return acc;
-      }, {} as Record<string, number>);
+      }, {} as Record<string, { selected: boolean; presentCount: string }>);
       form.setFieldValue("attendance", initialAttendance);
     } catch (error) {
       console.error("Error fetching employees:", error);
+      setErrorMessage('Failed to fetch employees. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMonthChange = (date: Date | null) => {
+    const formattedDate = dayjs(date).format("YYYY-MM");
+    setValue(date);
+    form.setFieldValue("month", formattedDate);
   };
 
   const handleSubmit = async () => {
     setLoading(true);
+    setErrorMessage('');
+    setSuccessMessage('');
     try {
-      const formData = new FormData();
-      formData.append("companyId", form.values.companyId);
-      formData.append("attendance", JSON.stringify(form.values.attendance));
-      if (form.values.attendanceSheet) {
-        formData.append("attendanceSheet", form.values.attendanceSheet);
+      const selectedEmployees = Object.entries(form.values.attendance)
+        .filter(([_, value]) => value.selected);
+
+      if (selectedEmployees.length === 0) {
+        setErrorMessage('No employees selected');
+        return;
       }
 
-      await axios.post("http://localhost:3003/attendance/mark", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const attendanceRecords = selectedEmployees.map(([employeeId, value]) => ({
+        employeeId,
+        companyId: form.values.companyId,
+        month: form.values.month,
+        presentCount: parseInt(value.presentCount),
+      }));
 
-      // Handle success (e.g., show a notification, reset form, etc.)
-      console.log("Attendance marked successfully");
+      const payload = {
+        records: attendanceRecords,
+      };
+
+      await axios.post('http://localhost:3003/attendance/bulk', payload);
+      setSuccessMessage('Attendance marked successfully');
+      setActive(4); // Move to the success step
+
+      // Upload file if present
+      if (form.values.file) {
+        const formData = new FormData();
+        formData.append('companyId', form.values.companyId);
+        formData.append('month', form.values.month);
+        formData.append('attendanceSheet', form.values.file);
+
+        await axios.post('http://localhost:3003/attendance/upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        setSuccessMessage('Attendance file uploaded successfully');
+      }
     } catch (error) {
-      console.error("Error marking attendance:", error);
+      console.error('Error marking attendance:', error);
+      setErrorMessage('Failed to mark attendance. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-
+  
   const nextStep = () => {
+    setErrorMessage('');
     if (form.validate().hasErrors) return;
     if (active === 0) {
       fetchEmployees(form.values.companyId);
     }
-    setActive((current) => (current < 2 ? current + 1 : current));
+    setActive((current) => (current < 3 ? current + 1 : current));
   };
 
-  const prevStep = () =>
+  const prevStep = () => {
+    setErrorMessage('');
     setActive((current) => (current > 0 ? current - 1 : current));
+  };
+
+  const resetForm = () => {
+    form.reset();
+    setActive(0);
+    setErrorMessage('');
+    setSuccessMessage('');
+    setValue(null);
+    setEmployees([]);
+  };
 
   return (
     <Container size="lg">
-      <Paper shadow="sm" p="md" withBorder>
+      <Paper shadow="sm" p="xl" withBorder>
         <LoadingOverlay
           visible={loading}
           zIndex={1000}
-          overlayProps={{ radius: "sm", blur: 2 }}
+          overlayProps={{ radius: 'sm', blur: 2 }}
         />
-        <Stepper active={active} onStepClick={setActive}>
+        <Title order={2} mb="lg">Mark Attendance</Title>
+        <Stepper active={active} onStepClick={setActive} mb="xl">
           <Stepper.Step label="Select Company" description="Choose a company">
             <Select
               label="Company"
@@ -133,7 +200,15 @@ const MarkAttendanceBySite: React.FC = () => {
                 value: company.id,
                 label: company.name,
               }))}
-              {...form.getInputProps("companyId")}
+              {...form.getInputProps('companyId')}
+              error={form.errors.companyId}
+            />
+          </Stepper.Step>
+
+          <Stepper.Step label="Select Month" description="Choose a month">
+            <MonthPicker
+              value={value}
+              onChange={handleMonthChange}
             />
           </Stepper.Step>
 
@@ -141,66 +216,122 @@ const MarkAttendanceBySite: React.FC = () => {
             label="Mark Attendance"
             description="Enter employee attendance"
           >
-            <Table>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Name</Table.Th>
-                  <Table.Th>Department</Table.Th>
-                  <Table.Th>Designation</Table.Th>
-                  <Table.Th>Present Days</Table.Th>
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {employees.map((employee) => (
-                  <Table.Tr key={employee.id}>
-                    <Table.Td>{`${employee.firstName} ${employee.lastName}`}</Table.Td>
-                    <Table.Td>{employee.employeeDepartmentName}</Table.Td>
-                    <Table.Td>{employee.designationName}</Table.Td>
-                    <Table.Td>
-                      <NumberInput
-                        min={0}
-                        max={31}
-                        {...form.getInputProps(`attendance.${employee.id}`)}
-                      />
-                    </Table.Td>
+            {errorMessage && (
+              <Alert icon={<IconAlertCircle size="1rem" />} color="red" mb="md">
+                {errorMessage}
+              </Alert>
+            )}
+            {employees.length > 0 ? (
+              <Table>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Select</Table.Th>
+                    <Table.Th>Name</Table.Th>
+                    <Table.Th>Department</Table.Th>
+                    <Table.Th>Designation</Table.Th>
+                    <Table.Th>Present Days</Table.Th>
                   </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
+                </Table.Thead>
+                <Table.Tbody>
+                  {employees.map((employee) => (
+                    <Table.Tr key={employee.id}>
+                      <Table.Td>
+                        <Checkbox
+                          {...form.getInputProps(
+                            `attendance.${employee.id}.selected`,
+                            { type: 'checkbox' }
+                          )}
+                        />
+                      </Table.Td>
+                      <Table.Td>{`${employee.firstName} ${employee.lastName}`}</Table.Td>
+                      <Table.Td>{employee.employeeDepartmentName}</Table.Td>
+                      <Table.Td>{employee.designationName}</Table.Td>
+                      <Table.Td>
+                        <Select
+                          data={Array.from({ length: 32 }, (_, i) => ({
+                            value: i.toString(),
+                            label: i.toString(),
+                          }))}
+                          disabled={!form.values.attendance[employee.id]?.selected}
+                          {...form.getInputProps(
+                            `attendance.${employee.id}.presentCount`
+                          )}
+                        />
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            ) : (
+              <Text c="dimmed">No employees found for the selected company.</Text>
+            )}
+            <Alert
+              icon={<IconAlertCircle size="1rem" />}
+              title="Reminder"
+              color="blue"
+              mt="md"
+            >
+              Please ensure you've selected employees and entered their attendance.
+            </Alert>
           </Stepper.Step>
 
           <Stepper.Step
-            label="Upload Sheet"
-            description="Upload attendance sheet"
+            label="Upload File"
+            description="Optional: Upload attendance file"
           >
             <FileInput
-              label="Upload Attendance Sheet"
+              label="Upload Attendance File"
               placeholder="Choose file"
-              accept=".csv,.xlsx,.xls"
-              leftSection={<IconUpload size={14} />}
-              {...form.getInputProps("attendanceSheet")}
+              accept=".jpeg,.png"
+              leftSection={<IconUpload size="1rem" />}
+              {...form.getInputProps('file')}
             />
+            <Alert
+              icon={<IconAlertCircle size="1rem" />}
+              title="Reminder"
+              color="blue"
+              mt="md"
+            >
+              Kindly ignore if already uploaded.
+            </Alert>
           </Stepper.Step>
 
           <Stepper.Completed>
-            <Text c="teal" fw={700}>
-              All steps completed - you're good to go!
-            </Text>
+            <Stack align="center" mt="xl">
+              <ThemeIcon color="teal" size={48} radius="xl">
+                <IconCheck size="1.5rem" stroke={1.5} />
+              </ThemeIcon>
+              <Text c="teal" ta="center" fz="xl" fw={700}>
+                Attendance Marked Successfully
+              </Text>
+              <Text c="dimmed" ta="center" mt="sm">
+                The attendance has been recorded for the selected employees.
+              </Text>
+              <Button onClick={resetForm} mt="lg">
+                Mark New Attendance
+              </Button>
+            </Stack>
           </Stepper.Completed>
         </Stepper>
 
-        <Group justify="flex-end" mt="xl">
-          {active !== 0 && (
-            <Button variant="default" onClick={prevStep}>
-              Back
-            </Button>
-          )}
-          {active !== 3 && (
-            <Button onClick={active === 2 ? handleSubmit : nextStep}>
-              {active === 2 ? "Submit" : "Next step"}
-            </Button>
-          )}
-        </Group>
+        {active !== 4 && (
+          <Group justify="flex-end" mt="xl">
+            {active !== 0 && (
+              <Button variant="default" onClick={prevStep}>
+                Back
+              </Button>
+            )}
+            {active === 3 ? (
+              <Button onClick={handleSubmit}>
+                Submit
+              </Button>
+            ) : (
+              <Button onClick={nextStep}>
+                Next step
+              </Button>
+            )}
+          </Group>
+        )}
       </Paper>
     </Container>
   );

@@ -17,6 +17,7 @@ import {
   ThemeIcon,
   Divider,
   Stack,
+  LoadingOverlay,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { DateInput, DatePickerInput } from "@mantine/dates";
@@ -26,6 +27,7 @@ import {
   IconTrash,
   IconEye,
   IconUserPlus,
+  IconUpload,
 } from "@tabler/icons-react";
 import axios from "axios";
 import {
@@ -37,7 +39,7 @@ import {
 } from "./interface/employee.interface";
 import "@mantine/core/styles.css";
 import { PDFViewer, pdf } from "@react-pdf/renderer";
-import EmployeePDF from "./employee.view";
+import EmployeeView from "./EmployeeView";
 import { parse } from "date-fns";
 
 const EmployeesPage: React.FC = () => {
@@ -54,6 +56,8 @@ const EmployeesPage: React.FC = () => {
   );
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const titleData = ["MR", "MS"].map((value) => ({
     value,
     label: value,
@@ -144,10 +148,10 @@ const EmployeesPage: React.FC = () => {
 
   const fetchEmployees = async () => {
     try {
-      const response = await axios.get<{ data: Employee[] }>(
+      const response = await axios.get(
         "http://localhost:3003/employees"
       );
-      setEmployees(response.data.data);
+      setEmployees(response.data.data.data);
     } catch (error) {
       console.error("Error fetching employees:", error);
     }
@@ -177,10 +181,10 @@ const EmployeesPage: React.FC = () => {
 
   const fetchCompanies = async () => {
     try {
-      const response = await axios.get<{ data: Companies[] }>(
+      const response = await axios.get(
         "http://localhost:3003/companies"
       );
-      setCompanies(response.data.data);
+      setCompanies(response.data.data.companies);
     } catch (error) {
       console.error("Error fetching companies:", error);
     }
@@ -190,7 +194,7 @@ const EmployeesPage: React.FC = () => {
     const employee = employees.find((emp) => emp.id === id);
     if (employee) {
       setSelectedEmployee(employee);
-      const blob = await pdf(<EmployeePDF employee={employee} />).toBlob();
+      const blob = await pdf(<EmployeeView employee={employee} />).toBlob();
       const url = URL.createObjectURL(blob);
       setViewModalOpened(true);
       setPdfUrl(url);
@@ -529,6 +533,11 @@ const EmployeesPage: React.FC = () => {
 
   return (
     <Container size="xl">
+      <LoadingOverlay
+        visible={loading}
+        zIndex={1000}
+        overlayProps={{ radius: "sm", blur: 2 }}
+      />
       <Group justify="space-between" mb="xl">
         <Title order={2}>Employees</Title>
         <Button
@@ -975,6 +984,7 @@ const EmployeesPage: React.FC = () => {
             <Grid.Col span={6}>
               <FileInput
                 label="Photo Upload"
+                leftSection={<IconUpload size={14} />}
                 required
                 placeholder="Upload photo"
                 {...form.getInputProps("photo")}
@@ -984,6 +994,7 @@ const EmployeesPage: React.FC = () => {
             <Grid.Col span={6}>
               <FileInput
                 label="Aadhaar Upload"
+                leftSection={<IconUpload size={14} />}
                 required
                 placeholder="Upload Aadhaar"
                 {...form.getInputProps("aadhaar")}
@@ -993,6 +1004,7 @@ const EmployeesPage: React.FC = () => {
             <Grid.Col span={6}>
               <FileInput
                 label="PAN Card Upload"
+                leftSection={<IconUpload size={14} />}
                 required
                 placeholder="Upload PAN card"
                 {...form.getInputProps("panCardUpload")}
@@ -1002,6 +1014,7 @@ const EmployeesPage: React.FC = () => {
             <Grid.Col span={6}>
               <FileInput
                 label="Bank Passbook"
+                leftSection={<IconUpload size={14} />}
                 required
                 placeholder="Upload bank passbook"
                 {...form.getInputProps("bankPassbook")}
@@ -1011,6 +1024,7 @@ const EmployeesPage: React.FC = () => {
             <Grid.Col span={6}>
               <FileInput
                 label="Mark Sheet"
+                leftSection={<IconUpload size={14} />}
                 required
                 placeholder="Upload mark sheet"
                 {...form.getInputProps("markSheet")}
@@ -1020,6 +1034,7 @@ const EmployeesPage: React.FC = () => {
             <Grid.Col span={6}>
               <FileInput
                 label="Other Document"
+                leftSection={<IconUpload size={14} />}
                 required
                 placeholder="Upload other document"
                 {...form.getInputProps("otherDocument")}

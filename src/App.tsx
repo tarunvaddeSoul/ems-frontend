@@ -7,6 +7,15 @@ import appTheme from "./appTheme";
 import Employee from "./components/Employee/Employee";
 import { RegisterForm } from "./components/Register/register";
 import MarkAttendanceBySite from "./components/Attendance/MarkAttendanceBySite";
+import UploadAttendance from "./components/Attendance/UploadAttendance";
+import AdvancedEmployeeSearch from "./components/Advanced Search/AdvancedEmployeeSearch";
+import AddEmployee from "./components/Employee/AddEmployee";
+import EditEmployee from "./components/Employee/EditEmployee";
+import ListEmployees from "./components/Employee/ListEmployees";
+import Dashboard from "./components/Home/Dashboard";
+import ListCompanies from "./components/Company/ListCompanies";
+import AddCompany from "./components/Company/AddCompany";
+import EditCompany from "./components/Company/EditCompany";
 
 const App = () => {
   return (
@@ -19,9 +28,17 @@ const App = () => {
               <Header />
               <div className="p-6">
                 <Routes>
-                  <Route path="/" element={<Home />} />
+                  <Route path="/" element={<Dashboard />} />
                   <Route path="/employees" element={<Employee />} />
+                  <Route path="/employees/list" element={<ListEmployees />} />
+                  <Route path="/employees/edit/:id" element={<EditEmployee />} />
+                  <Route path="/employees/add" element={<AddEmployee />} />
+                  <Route path="/employees/search" element={<AdvancedEmployeeSearch />} />
                   <Route path="/attendance/mark" element={<MarkAttendanceBySite />} />
+                  <Route path="/attendance/upload" element={<UploadAttendance />} />
+                  <Route path="/companies/list" element={<ListCompanies />} />
+                  <Route path="/companies/add" element={<AddCompany />} />
+                  <Route path="/companies/edit/:id" element={<EditCompany />} />
                   <Route path="/register" element={<RegisterForm />} />
                 </Routes>
               </div>

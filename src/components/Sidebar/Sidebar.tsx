@@ -1,8 +1,22 @@
-import { useState } from 'react';
-import { SidebarItem } from './SidebarItem';
-import { Home, User, Calendar, Document, Building, Wallet, ChevronDown, ChevronUp } from '@carbon/icons-react';
-import { Collapse, Box, Transition, Tooltip } from '@mantine/core';
-import { motion } from 'framer-motion';
+import { useState } from "react";
+import { SidebarItem } from "./SidebarItem";
+import {
+  Home,
+  User,
+  Calendar,
+  Document,
+  Building,
+  Wallet,
+  ChevronDown,
+  ChevronUp,
+  Add,
+  Upload,
+  Search,
+  Dashboard,
+} from "@carbon/icons-react";
+import { Collapse, Box, Transition, Tooltip } from "@mantine/core";
+import { motion } from "framer-motion";
+import { Create } from "@mui/icons-material";
 
 const Path = (props: any) => (
   <motion.path
@@ -21,20 +35,20 @@ const ToggleButton = ({ isOpen, toggle }: any) => {
       animate={isOpen ? "open" : "closed"}
       initial={false}
       style={{
-        background: 'transparent',
-        border: 'none',
-        cursor: 'pointer',
-        outline: 'none',
-        position: 'fixed',
-        top: '1.26rem',
-        left: isOpen ? '13rem' : '1rem',
+        background: "transparent",
+        border: "none",
+        cursor: "pointer",
+        outline: "none",
+        position: "fixed",
+        top: "1.26rem",
+        left: isOpen ? "13rem" : "1rem",
         zIndex: 1001,
         width: 40,
         height: 40,
-        borderRadius: '50%',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
+        borderRadius: "50%",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
       }}
     >
       <svg width="23" height="23" viewBox="0 0 23 23">
@@ -65,11 +79,26 @@ const ToggleButton = ({ isOpen, toggle }: any) => {
 
 const Sidebar = () => {
   const [attendanceOpen, setAttendanceOpen] = useState(false);
+  const [employeesOpen, setEmployeesOpen] = useState(false);
+  const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
+  const [companiesOpen, setCompaniesOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const toggleAttendance = () => {
     setAttendanceOpen((prev) => !prev);
   };
+
+  const toggleEmployees = () => {
+    setEmployeesOpen((prev) => !prev);
+  };
+
+  const toggleAdvancedSearch = () => {
+    setAdvancedSearchOpen((prev) => !prev);
+  };
+
+  const toggleCompanies = () => {
+    setCompaniesOpen((prev) => !prev);
+  }
 
   const toggleSidebar = () => {
     setSidebarOpen((prev) => !prev);
@@ -78,30 +107,74 @@ const Sidebar = () => {
   return (
     <>
       <ToggleButton isOpen={sidebarOpen} toggle={toggleSidebar} />
-      
+
       <Transition transition="slide-right" duration={300} mounted={sidebarOpen}>
         {(styles) => (
           <Box
             style={{
               ...styles,
-              width: '16rem',
-              backgroundColor: 'white',
-              borderRight: '1px solid #E5E7EB',
-              padding: '1.5rem',
-              position: 'fixed',
+              width: "16rem",
+              backgroundColor: "white",
+              borderRight: "1px solid #E5E7EB",
+              padding: "1.5rem",
+              position: "fixed",
               top: 0,
               left: 0,
-              height: '100vh',
-              overflowY: 'auto',
+              height: "100vh",
+              overflowY: "auto",
               zIndex: 1000,
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "1.5rem",
+              }}
+            >
               <div className="text-2xl font-bold">Tulsyan</div>
             </div>
             <nav className="space-y-4">
-              <SidebarItem to="/" icon={<Home size={24} />} label="Home" />
-              <SidebarItem to="/employees" icon={<User size={24} />} label="Employees" />
+              <SidebarItem to="/" icon={<Dashboard size={24} />} label="Dashboard" />
+              <div>
+                <button
+                  onClick={toggleEmployees}
+                  className="flex items-center p-2 text-gray-600 hover:bg-gray-100 rounded transition duration-200 w-full text-left"
+                >
+                  <User size={24} className="mr-3" />
+                  <span>Employees</span>
+                  {employeesOpen ? (
+                    <ChevronUp size={24} className="ml-auto" />
+                  ) : (
+                    <ChevronDown size={24} className="ml-auto" />
+                  )}
+                </button>
+                <Collapse in={employeesOpen}>
+                  <div className="pl-10">
+                    <SidebarItem
+                      to="/employees/list"
+                      icon={<User size={24} />}
+                      label="List Employees"
+                    />
+                    <SidebarItem
+                      to="/employees/add"
+                      icon={<Add size={24} />}
+                      label="Add Employee"
+                    />
+                    {/* <SidebarItem
+                      to="/employees/edit"
+                      icon={<Edit size={24} />}
+                      label="Edit Employee"
+                    /> */}
+                    <SidebarItem
+                      to="/employees/search"
+                      icon={<Search size={24} />}
+                      label="Advanced Search Employee"
+                    />
+                  </div>
+                </Collapse>
+              </div>
               <div>
                 <button
                   onClick={toggleAttendance}
@@ -109,24 +182,81 @@ const Sidebar = () => {
                 >
                   <Calendar size={24} className="mr-3" />
                   <span>Attendance</span>
-                  {attendanceOpen ? <ChevronUp size={24} className="ml-auto" /> : <ChevronDown size={24} className="ml-auto" />}
+                  {attendanceOpen ? (
+                    <ChevronUp size={24} className="ml-auto" />
+                  ) : (
+                    <ChevronDown size={24} className="ml-auto" />
+                  )}
                 </button>
                 <Collapse in={attendanceOpen}>
                   <div className="pl-10">
-                    <SidebarItem to="/attendance/records" icon={<Document size={24} />} label="Records" />
-                    <SidebarItem to="/attendance/mark" icon={<Calendar size={24} />} label="Attendance By Site" />
+                    <SidebarItem
+                      to="/attendance/mark"
+                      icon={<Calendar size={24} />}
+                      label="Attendance By Site"
+                    />
+                    <SidebarItem
+                      to="/attendance/upload"
+                      icon={<Upload size={24} />}
+                      label="Upload Attendance"
+                    />
+                    <SidebarItem
+                      to="/attendance/records"
+                      icon={<Document size={24} />}
+                      label="Records"
+                    />
                   </div>
                 </Collapse>
               </div>
-              <SidebarItem to="/companies" icon={<Building size={24} />} label="Companies" />
-              <SidebarItem to="/salary" icon={<Wallet size={24} />} label="Salary" />
+              <div>
+                <button
+                  onClick={toggleCompanies}
+                  className="flex items-center p-2 text-gray-600 hover:bg-gray-100 rounded transition duration-200 w-full text-left"
+                >
+                  <Building size={24} className="mr-3" />
+                  <span>Companies</span>
+                  {companiesOpen ? (
+                    <ChevronUp size={24} className="ml-auto" />
+                  ) : (
+                    <ChevronDown size={24} className="ml-auto" />
+                  )}
+                </button>
+                <Collapse in={companiesOpen}>
+                  <div className="pl-10">
+                    <SidebarItem
+                      to="/companies/list"
+                      icon={<Building size={24} />}
+                      label="List Companies"
+                    />
+                    <SidebarItem
+                      to="/companies/add"
+                      icon={<Add size={24} />}
+                      label="Add Company"
+                    />
+                    {/* <SidebarItem
+                      to="/companies/edit"
+                      icon={<Create />}
+                      label="Edit Company"
+                    /> */}
+                  </div>
+                </Collapse>
+              </div>
+              <SidebarItem
+                to="/salary"
+                icon={<Wallet size={24} />}
+                label="Salary"
+              />
             </nav>
           </Box>
         )}
       </Transition>
 
-      <div style={{ marginLeft: sidebarOpen ? '16rem' : '0', transition: 'margin-left 0.3s' }}>
-        {/* Your main content goes here */}
+      <div
+        style={{
+          marginLeft: sidebarOpen ? "16rem" : "0",
+          transition: "margin-left 0.3s",
+        }}
+      >
       </div>
     </>
   );
