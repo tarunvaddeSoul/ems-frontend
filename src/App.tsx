@@ -1,52 +1,79 @@
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import Sidebar from "./components/Sidebar/Sidebar";
-import Header from "./components/Header/Header";
-import Home from "./components/Home/Home";
-import { MantineProvider, Box } from "@mantine/core";
-import appTheme from "./appTheme";
-import Employee from "./components/Employee/Employee";
-import { RegisterForm } from "./components/Register/register";
-import MarkAttendanceBySite from "./components/Attendance/MarkAttendanceBySite";
-import UploadAttendance from "./components/Attendance/UploadAttendance";
-import AdvancedEmployeeSearch from "./components/Advanced Search/AdvancedEmployeeSearch";
-import AddEmployee from "./components/Employee/AddEmployee";
-import EditEmployee from "./components/Employee/EditEmployee";
-import ListEmployees from "./components/Employee/ListEmployees";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import { MantineProvider, createTheme, ColorSchemeScript, Loader } from "@mantine/core";
+import '@mantine/core/styles.css';
+
+import MainLayout from "./components/Layout/MainLayout";
+import AuthLayout from "./components/Layout/AuthLayout";
 import Dashboard from "./components/Home/Dashboard";
-import ListCompanies from "./components/Company/ListCompanies";
-import AddCompany from "./components/Company/AddCompany";
-import EditCompany from "./components/Company/EditCompany";
+import EmployeeRoutes from "./components/routes/EmployeeRoutes";
+import CompanyRoutes from "./components/routes/CompanyRoutes";
+import AttendanceRoutes from "./components/routes/AttendanceRoutes";
+import { AuthForm } from "./components/Register/register"; 
+import { ProfilePage } from "./components/Profile/ProfilePage";
+import SalaryPage from "./components/Salary/Salary";
+import { Notifications } from "@mantine/notifications";
+import RingLoader from "./RingLoader";
+
+const theme = createTheme({
+  primaryColor: 'violet',
+  colors: {
+    grape: [
+      '#F8F0FC',
+      '#F3D9FA',
+      '#EEBEFA',
+      '#E599F7',
+      '#DA77F2',
+      '#CC5DE8',
+      '#BE4BDB',
+      '#AE3EC9',
+      '#9C36B5',
+      '#862E9C',
+    ],
+  },
+  fontFamily: 'Roboto, sans-serif',
+  headings: {
+    fontFamily: 'Roboto, sans-serif',
+  },
+  components: {
+    Loader: Loader.extend({
+      defaultProps: {
+        loaders: { ...Loader.defaultLoaders, ring: RingLoader },
+        type: 'ring',
+      },
+    }),
+  }
+});
 
 const App = () => {
   return (
-    <MantineProvider theme={appTheme} withGlobalClasses withCssVariables>
-      <Box h="150vh" bg="brandColor.0">
+    <>
+      <ColorSchemeScript />
+      <MantineProvider theme={theme} defaultColorScheme="light">
+      <Notifications />
+      <Loader />
         <Router>
-          <div className="flex">
-            <Sidebar />
-            <div className="flex-1 flex flex-col">
-              <Header />
-              <div className="p-6">
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/employees" element={<Employee />} />
-                  <Route path="/employees/list" element={<ListEmployees />} />
-                  <Route path="/employees/edit/:id" element={<EditEmployee />} />
-                  <Route path="/employees/add" element={<AddEmployee />} />
-                  <Route path="/employees/search" element={<AdvancedEmployeeSearch />} />
-                  <Route path="/attendance/mark" element={<MarkAttendanceBySite />} />
-                  <Route path="/attendance/upload" element={<UploadAttendance />} />
-                  <Route path="/companies/list" element={<ListCompanies />} />
-                  <Route path="/companies/add" element={<AddCompany />} />
-                  <Route path="/companies/edit/:id" element={<EditCompany />} />
-                  <Route path="/register" element={<RegisterForm />} />
-                </Routes>
-              </div>
-            </div>
-          </div>
+          <Routes>
+            {/* Auth routes */}
+            <Route element={<AuthLayout />}>
+              <Route path="/auth" element={<AuthForm />} />
+            </Route>
+
+            {/* Main app routes */}
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/employees/*" element={<EmployeeRoutes />} />
+              <Route path="/companies/*" element={<CompanyRoutes />} />
+              <Route path="/attendance/*" element={<AttendanceRoutes />} />
+              <Route path="/salary/*" element={<SalaryPage />} />
+            </Route>
+
+            {/* Catch-all redirect */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </Router>
-      </Box>
-    </MantineProvider>
+      </MantineProvider>
+    </>
   );
 };
 

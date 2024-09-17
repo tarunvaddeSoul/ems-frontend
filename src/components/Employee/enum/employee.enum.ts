@@ -23,3 +23,8 @@ export enum Category {
     MR = 'MR',
     MS = 'MS',
   }
+
+  export enum Status {
+    ACTIVE = 'ACTIVE',
+    INACTIVE = 'INACTIVE',
+  }

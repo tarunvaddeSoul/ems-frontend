@@ -49,17 +49,21 @@ const EditEmployee: React.FC = () => {
     try {
       const response = await axios.get(`http://localhost:3003/employees/${id}`);
       const employeeData = response.data.data;
-      console.log(JSON.stringify(employeeData, null, 2));
-      // Parse date strings to Date objects
+      
       const parsedEmployee = {
         ...employeeData,
         dateOfBirth: parseDate(employeeData.dateOfBirth),
-        dateOfJoining: parseDate(employeeData.dateOfJoining),
+        employeeOnboardingDate: parseDate(employeeData.employeeOnboardingDate),
+        employeeRelievingDate: parseDate(employeeData.employeeRelievingDate),
         policeVerificationDate: parseDate(employeeData.policeVerificationDate),
-        trainingCertificateDate: parseDate(
-          employeeData.trainingCertificateDate
-        ),
+        trainingCertificateDate: parseDate(employeeData.trainingCertificateDate),
         medicalCertificateDate: parseDate(employeeData.medicalCertificateDate),
+        // Map employment history data
+        currentCompanyId: employeeData.employmentHistories[0]?.companyId,
+        currentCompanyDesignationId: employeeData.employmentHistories[0]?.designationId,
+        currentCompanyDepartmentId: employeeData.employmentHistories[0]?.departmentId,
+        currentCompanySalary: employeeData.employmentHistories[0]?.salary,
+        currentCompanyJoiningDate: parseDate(employeeData.employmentHistories[0]?.joiningDate),
       };
 
       setEmployee(parsedEmployee);
@@ -125,7 +129,6 @@ const EditEmployee: React.FC = () => {
 
       Object.entries(values).forEach(([key, value]) => {
         if (value instanceof Date) {
-          // Format Date to DD-MM-YYYY
           const day = value.getDate().toString().padStart(2, "0");
           const month = (value.getMonth() + 1).toString().padStart(2, "0");
           const year = value.getFullYear();
@@ -137,6 +140,16 @@ const EditEmployee: React.FC = () => {
         }
       });
 
+      // Add employment history data
+      formData.append('companyId', values.currentCompanyId || '');
+      formData.append('designationId', values.currentCompanyDesignationId || '');
+      formData.append('departmentId', values.currentCompanyDepartmentId || '');
+      formData.append('salary', String(values.currentCompanySalary || 0));
+      if (values.currentCompanyJoiningDate) {
+        const joiningDate = values.currentCompanyJoiningDate as Date;
+        formData.append('joiningDate', `${joiningDate.getDate().toString().padStart(2, '0')}-${(joiningDate.getMonth() + 1).toString().padStart(2, '0')}-${joiningDate.getFullYear()}`);
+      }
+
       await axios.put(`http://localhost:3003/employees/${id}`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -144,7 +157,7 @@ const EditEmployee: React.FC = () => {
       });
 
       showNotification("Employee updated successfully", "green");
-      navigate("/employees"); // Redirect to employee list
+      navigate("/employees");
     } catch (error) {
       console.error("Error updating employee:", error);
       showNotification("Failed to update employee", "red");
@@ -162,21 +175,12 @@ const EditEmployee: React.FC = () => {
   };
 
   if (!employee) {
-    return (
-      <Notification
-        color='red'
-      >
-        {"Employee not found."}
-      </Notification>
-    );
+    return <Notification color="red">Employee not found.</Notification>;
   }
 
   return (
     <Container size="xl">
-      <LoadingOverlay
-        visible={loading}
-        overlayProps={{ radius: "sm", blur: 2 }}
-      />
+      <LoadingOverlay visible={loading} overlayProps={{ radius: "sm", blur: 2 }} />
       <Stack gap="md">
         <Title order={2}>Edit Employee</Title>
         {notification.show && (

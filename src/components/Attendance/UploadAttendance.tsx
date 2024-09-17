@@ -133,7 +133,7 @@ const UploadAttendance: React.FC = () => {
           overlayProps={{ radius: 'sm', blur: 2 }}
         />
         <Title order={2} mb="lg">Upload Attendance</Title>
-        <Stepper active={active} onStepClick={setActive} mb="xl">
+        <Stepper active={active} onStepClick={setActive} mb="xl" allowNextStepsSelect={false}>
           <Stepper.Step label="Select Company" description="Choose a company">
             <Select
               label="Company"

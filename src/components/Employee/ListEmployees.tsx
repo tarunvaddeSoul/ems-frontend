@@ -15,6 +15,7 @@ import {
   Select,
   NumberInput,
   Grid,
+  Anchor,
 } from "@mantine/core";
 import {
   IconEye,
@@ -29,28 +30,11 @@ import {
   Designation,
   Employee,
   EmployeeDepartments,
+  EmployeeSearchParams,
 } from "./interface/employee.interface";
 import { useNavigate } from "react-router-dom";
 import { pdf } from "@react-pdf/renderer";
 import EmployeeView from "./EmployeeView";
-
-interface EmployeeSearchParams {
-  page: number;
-  limit: number;
-  searchText?: string;
-  designationId?: string;
-  employeeDepartmentId?: string;
-  companyId?: string;
-  gender?: string;
-  category?: string;
-  highestEducationQualification?: string;
-  minAge?: number;
-  maxAge?: number;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-  startDate?: string;
-  endDate?: string;
-}
 
 const ListEmployees: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -115,9 +99,7 @@ const ListEmployees: React.FC = () => {
 
   const fetchCompanies = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:3003/companies"
-      );
+      const response = await axios.get("http://localhost:3003/companies");
       setCompanies(response.data.data.companies);
     } catch (error) {
       console.error("Error fetching companies:", error);
@@ -136,6 +118,10 @@ const ListEmployees: React.FC = () => {
 
   const handleEdit = (employee: Employee) => {
     navigate(`/employees/edit/${employee.id}`);
+  };
+
+  const handleIdClick = (id: string) => {
+    navigate(`/employees/${id}`);
   };
 
   const handleDelete = (id: string) => {
@@ -163,9 +149,14 @@ const ListEmployees: React.FC = () => {
             <Text size="sm" fw={500}>
               {`${employee.firstName} ${employee.lastName}`}
             </Text>
-            <Text size="xs" c="dimmed">
+            <Anchor
+              component="button"
+              size="xs"
+              c="violet"
+              onClick={() => handleIdClick(employee.id)}
+            >
               ID: {employee.id}
-            </Text>
+            </Anchor>
           </div>
         </Group>
       </Table.Td>
@@ -174,7 +165,9 @@ const ListEmployees: React.FC = () => {
           <ThemeIcon size="sm" variant="light" color="blue">
             <IconBuilding size="0.8rem" />
           </ThemeIcon>
-          <Text size="sm">{employee.designationName}</Text>
+          <Text size="sm">
+            {employee.employmentHistories[0]?.designationName}
+          </Text>
         </Group>
       </Table.Td>
       <Table.Td>
@@ -182,7 +175,9 @@ const ListEmployees: React.FC = () => {
           <ThemeIcon size="sm" variant="light" color="blue">
             <IconBuilding size="0.8rem" />
           </ThemeIcon>
-          <Text size="sm">{employee.employeeDepartmentName}</Text>
+          <Text size="sm">
+            {employee.employmentHistories[0]?.departmentName}
+          </Text>
         </Group>
       </Table.Td>
       <Table.Td>
@@ -190,7 +185,7 @@ const ListEmployees: React.FC = () => {
           <ThemeIcon size="sm" variant="light" color="blue">
             <IconBuilding size="0.8rem" />
           </ThemeIcon>
-          <Text size="sm">{employee.companyName}</Text>
+          <Text size="sm">{employee.employmentHistories[0]?.companyName}</Text>
         </Group>
       </Table.Td>
       <Table.Td>

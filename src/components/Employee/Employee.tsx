@@ -84,10 +84,11 @@ const EmployeesPage: React.FC = () => {
       title: "",
       firstName: "",
       lastName: "",
-      designationId: "",
-      employeeDepartmentId: "",
+      status: "",
+      currentCompanyDesignationId: "",
+      currentCompanyDepartmentId: "",
       mobileNumber: "",
-      companyId: "",
+      currentCompanyId: "",
       recruitedBy: "",
       gender: "",
       fatherName: "",
@@ -95,7 +96,7 @@ const EmployeesPage: React.FC = () => {
       husbandName: "",
       category: "",
       dateOfBirth: new Date(),
-      dateOfJoining: new Date(),
+      employeeOnboardingDate: new Date(),
       highestEducationQualification: "",
       bloodGroup: "",
       permanentAddress: "",
@@ -121,11 +122,11 @@ const EmployeesPage: React.FC = () => {
       medicalCertificateDate: new Date(),
       photo: null,
       aadhaar: null,
-      panCardUpload: null,
+      panCard: null,
       bankPassbook: null,
       markSheet: null,
       otherDocument: null,
-      salary: 0,
+      currentCompanySalary: 0,
       aadhaarNumber: "",
     },
     validate: {
@@ -135,7 +136,7 @@ const EmployeesPage: React.FC = () => {
         /^\d{10}$/.test(value) ? null : "Invalid mobile number",
       aadhaarNumber: (value) =>
         /^\d{12}$/.test(value) ? null : "Invalid Aadhaar number",
-      salary: (value) => (value > 0 ? null : "Salary must be greater than 0"),
+      // salary: (value) => (value > 0 ? null : "Salary must be greater than 0"),
     },
   });
 
@@ -207,10 +208,10 @@ const EmployeesPage: React.FC = () => {
         title: employeeToEdit.title,
         firstName: employeeToEdit.firstName,
         lastName: employeeToEdit.lastName,
-        designationId: employeeToEdit.designationId,
-        employeeDepartmentId: employeeToEdit.employeeDepartmentId,
+        // designationId: employeeToEdit.designationId,
+        // employeeDepartmentId: employeeToEdit.employeeDepartmentId,
         mobileNumber: employeeToEdit.mobileNumber,
-        companyId: employeeToEdit.companyId,
+        // companyId: employeeToEdit.companyId,
         recruitedBy: employeeToEdit.recruitedBy,
         gender: employeeToEdit.gender,
         fatherName: employeeToEdit.fatherName,
@@ -222,7 +223,7 @@ const EmployeesPage: React.FC = () => {
           "dd-MM-yyyy",
           new Date()
         ),
-        dateOfJoining: parse(
+        employeeOnboardingDate: parse(
           employeeToEdit.dateOfJoining as string,
           "dd-MM-yyyy",
           new Date()
@@ -263,7 +264,7 @@ const EmployeesPage: React.FC = () => {
           "dd-MM-yyyy",
           new Date()
         ),
-        salary: employeeToEdit.salary,
+        // salary: employeeToEdit.salary,
         aadhaarNumber: employeeToEdit.aadhaarNumber,
       };
 
@@ -350,10 +351,10 @@ const EmployeesPage: React.FC = () => {
       formData.append("title", values.title);
       formData.append("firstName", values.firstName);
       formData.append("lastName", values.lastName);
-      formData.append("designationId", values.designationId);
-      formData.append("employeeDepartmentId", values.employeeDepartmentId);
-      formData.append("mobileNumber", values.mobileNumber);
-      formData.append("companyId", values.companyId);
+      // formData.append("currentCompanyDesignationId", values.currentCompanyDesignationId);
+      // formData.append("currentCompanyDepartmentId", values.currentCompanyDepartmentId);
+      // formData.append("mobileNumber", values.mobileNumber);
+      // formData.append("companyId", values.companyId);
       formData.append("recruitedBy", values.recruitedBy);
       formData.append("gender", values.gender);
       formData.append("fatherName", values.fatherName);
@@ -370,11 +371,11 @@ const EmployeesPage: React.FC = () => {
       );
       formData.append(
         "dateOfJoining",
-        `${values.dateOfJoining.getDate().toString().padStart(2, "0")}-${(
-          values.dateOfJoining.getMonth() + 1
+        `${values.employeeOnboardingDate.getDate().toString().padStart(2, "0")}-${(
+          values.employeeOnboardingDate.getMonth() + 1
         )
           .toString()
-          .padStart(2, "0")}-${values.dateOfJoining.getFullYear()}`
+          .padStart(2, "0")}-${values.employeeOnboardingDate.getFullYear()}`
       );
       formData.append(
         "highestEducationQualification",
@@ -437,11 +438,11 @@ const EmployeesPage: React.FC = () => {
       );
       formData.append("photo", values.photo as any);
       formData.append("aadhaar", values.aadhaar as any);
-      formData.append("panCardUpload", values.panCardUpload as any);
+      formData.append("panCard", values.panCard as any);
       formData.append("bankPassbook", values.bankPassbook as any);
       formData.append("markSheet", values.markSheet as any);
       formData.append("otherDocument", values.otherDocument as any);
-      formData.append("salary", values.salary.toString());
+      // formData.append("salary", values.salary.toString());
       formData.append("aadhaarNumber", values.aadhaarNumber);
 
       const response = await axios.post(

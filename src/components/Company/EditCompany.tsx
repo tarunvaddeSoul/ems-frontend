@@ -1,28 +1,28 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Container, Title, Paper, LoadingOverlay, Text } from "@mantine/core";
-import axios from "axios";
-import CompanyForm from "./CompanyForm";
-import { Company } from "./interface/company.interface";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { Container, Title, LoadingOverlay, Notification } from '@mantine/core';
+import CompanyForm from './CompanyForm';
 
-const EditCompany: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+const EditCompanyPage = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [company, setCompany] = useState<any>(null);
+  const [company, setCompany] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCompany = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:3003/companies/${id}`
-        );
+        const response = await axios.get(`http://localhost:3003/companies/${id}`);
         setCompany(response.data.data);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching company:", err);
-        setError("Failed to fetch company data. Please try again.");
+      } catch (error) {
+        console.error('Error fetching company:', error);
+        // notifications.show({
+        //   title: 'Error',
+        //   message: 'Failed to fetch company data',
+        //   color: 'red',
+        // });
+      } finally {
         setLoading(false);
       }
     };
@@ -30,59 +30,44 @@ const EditCompany: React.FC = () => {
     fetchCompany();
   }, [id]);
 
-  const handleSubmit = async (values: Company) => {
+  const handleSubmit = async (values: any) => {
     try {
       setLoading(true);
-      const editData = {
-        name: values.name,
-        address: values.address,
-        contactPersonName: values.contactPersonName,
-        contactPersonNumber: values.contactPersonNumber,
-        presentDaysCount: values.presentDaysCount,
-        PF: values.PF,
-        ESIC: values.ESIC,
-        BONUS: values.BONUS,
-        LWF: values.LWF,
-        otherAllowance: values.otherAllowance,
-        otherAllowanceRemark: values.otherAllowanceRemark,
-      };
-      await axios.put(`http://localhost:3003/companies/${id}`, editData);
-      navigate("/companies/list"); // Redirect to the companies list page
-    } catch (err) {
-      console.error("Error updating company:", err);
-      setError("Failed to update company. Please try again.");
+      await axios.put(`http://localhost:3003/companies/${id}`, values);
+      // notifications.show({
+      //   title: 'Success',
+      //   message: 'Company updated successfully',
+      //   color: 'green',
+      // });
+      navigate('/companies'); // Redirect to company list
+    } catch (error) {
+      console.error('Error updating company:', error);
+      // notifications.show({
+      //   title: 'Error',
+      //   message: 'Failed to update company',
+      //   color: 'red',
+      // });
+    } finally {
       setLoading(false);
     }
   };
 
   if (loading) {
-    return (
-      <Container size="sm">
-        <LoadingOverlay visible={true} />
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container size="sm">
-        <Paper p="xl" withBorder>
-          <Text c="red">{error}</Text>
-        </Paper>
-      </Container>
-    );
+    return <LoadingOverlay visible />;
   }
 
   return (
-    <Container size="sm">
-      <Title order={2} mb="xl">
-        Edit Company
-      </Title>
+    <Container size="xl">
+      <Title order={1} mb="xl">Edit Company</Title>
       {company && (
-        <CompanyForm onSubmit={handleSubmit} initialValues={company} />
+        <CompanyForm
+          initialValues={company}
+          onSubmit={handleSubmit}
+          isLoading={loading}
+        />
       )}
     </Container>
   );
 };
 
-export default EditCompany;
+export default EditCompanyPage;

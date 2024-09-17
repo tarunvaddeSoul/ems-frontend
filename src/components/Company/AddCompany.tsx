@@ -1,28 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Container, Title } from '@mantine/core';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import CompanyForm from './CompanyForm';
+import { Company } from './interface/company.interface';
 
 const AddCompany: React.FC = () => {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: Company) => {
+    setIsLoading(true);
     try {
       await axios.post('http://localhost:3003/companies', values);
-      // Optionally show a success notification here
-      navigate('/companies/list'); // Redirect to the companies list page
+      navigate('/companies/list');
     } catch (error) {
       console.error('Error creating company:', error);
-      // Optionally show an error notification here
+      // Handle error (e.g., show error notification)
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <Container size="sm">
-      <Title order={2} mb="xl">
-        Add New Company
-      </Title>
+    <Container size="lg">
+      <Title order={1} mb="xl">Add New Company</Title>
       <CompanyForm onSubmit={handleSubmit} />
     </Container>
   );

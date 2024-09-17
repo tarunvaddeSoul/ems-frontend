@@ -17,8 +17,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { pdf } from "@react-pdf/renderer";
 import * as XLSX from "xlsx";
-import ViewCompanyInPDF from "./ViewCompanyInPDF";
-import ViewCompanyInExcel from "./ViewCompanyInExcel";
+// import ViewCompanyInPDF from "./ViewCompanyInPDF";
+// import ViewCompanyInExcel from "./ViewCompanyInExcel";
 import { Company, CompanySearchParams } from "./interface/company.interface";
 
 const ListCompanies: React.FC = () => {
@@ -69,7 +69,7 @@ const ListCompanies: React.FC = () => {
   const handleDownloadPDF = async () => {
     if (selectedCompany) {
       const blob = await pdf(
-        <ViewCompanyInPDF company={selectedCompany} />
+        // <ViewCompanyInPDF company={selectedCompany} />
       ).toBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -84,13 +84,13 @@ const ListCompanies: React.FC = () => {
     if (selectedCompany) {
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet([
-        ViewCompanyInExcel(selectedCompany),
+        // ViewCompanyInExcel(selectedCompany),
       ]);
       XLSX.utils.book_append_sheet(wb, ws, "Company");
       XLSX.writeFile(wb, `company_${selectedCompany.id}.xlsx`);
     }
   };
-  const handleEdit = (id: string) => {
+  const handleEdit = (id: string | undefined) => {
     navigate(`/companies/edit/${id}`);
   };
   const rows = companies.map((company) => (

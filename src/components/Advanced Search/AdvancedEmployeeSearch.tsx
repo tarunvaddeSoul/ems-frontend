@@ -14,6 +14,7 @@ import {
   Pagination,
   LoadingOverlay,
   Text,
+  Anchor,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconSearch } from "@tabler/icons-react";
@@ -24,6 +25,7 @@ import {
   EmployeeDepartments,
 } from "../Employee/interface/employee.interface";
 import { DatePickerInput } from "@mantine/dates";
+import { useNavigate } from "react-router-dom";
 
 const AdvancedEmployeeSearch: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -35,6 +37,7 @@ const AdvancedEmployeeSearch: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const navigate = useNavigate();
 
   const form = useForm({
     initialValues: {
@@ -57,6 +60,7 @@ const AdvancedEmployeeSearch: React.FC = () => {
     fetchDesignations();
     fetchEmployeeDepartments();
     fetchCompanies();
+    fetchEmployees(1);
   }, []);
 
   function formatDateToDDMMYYYY(date: Date): string {
@@ -66,12 +70,12 @@ const AdvancedEmployeeSearch: React.FC = () => {
     return `${day}-${month}-${year}`;
   }
 
-  const fetchEmployees = async () => {
+  const fetchEmployees = async (currentPage = 1) => {
     setLoading(true);
     try {
       const response = await axios.get("http://localhost:3003/employees", {
         params: {
-          page,
+          page: currentPage,
           limit: 10,
           searchText: form.values.searchText,
           designationId: form.values.designationId,
@@ -126,9 +130,7 @@ const AdvancedEmployeeSearch: React.FC = () => {
 
   const fetchCompanies = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:3003/companies"
-      );
+      const response = await axios.get("http://localhost:3003/companies");
       setCompanies(response.data.data.companies);
     } catch (error) {
       console.error("Error fetching companies:", error);
@@ -143,6 +145,15 @@ const AdvancedEmployeeSearch: React.FC = () => {
   const handleClearFilters = () => {
     form.reset();
     setPage(1);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    fetchEmployees(newPage);
+  };
+
+  const handleIdClick = (id: string) => {
+    navigate(`/employees/${id}`);
   };
 
   return (
@@ -204,12 +215,14 @@ const AdvancedEmployeeSearch: React.FC = () => {
               />
 
               <DatePickerInput
+                valueFormat="DD-MM-YYYY"
                 label="Start Date"
                 placeholder="Select date"
                 {...form.getInputProps("startDate")}
               />
 
               <DatePickerInput
+                valueFormat="DD-MM-YYYY"
                 label="End Date"
                 placeholder="Select date"
                 {...form.getInputProps("endDate")}
@@ -298,22 +311,38 @@ const AdvancedEmployeeSearch: React.FC = () => {
                   <Table.Th>Company</Table.Th>
                   <Table.Th>Gender</Table.Th>
                   <Table.Th>Age</Table.Th>
-                  <Table.Th>Category</Table.Th>
+                  {/* <Table.Th>Category</Table.Th>
                   <Table.Th>Education</Table.Th>
-                  <Table.Th>Salary</Table.Th>
+                  <Table.Th>Salary</Table.Th> */}
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
                 {employees.map((employee) => (
                   <Table.Tr key={employee.id}>
-                    <Table.Td>{employee.id}</Table.Td>
+                    <Table.Td>
+                      <Anchor
+                        component="button"
+                        size="md"
+                        c="violet"
+                        onClick={() => handleIdClick(employee.id)}
+                      >
+                      {employee.id}
+                      </Anchor>
+                    </Table.Td>
+
                     <Table.Td>{`${employee.firstName} ${employee.lastName}`}</Table.Td>
-                    <Table.Td>{employee.designationName}</Table.Td>
-                    <Table.Td>{employee.employeeDepartmentName}</Table.Td>
-                    <Table.Td>{employee.companyName}</Table.Td>
+                    <Table.Td>
+                      {employee.employmentHistories[0]?.designation?.name}
+                    </Table.Td>
+                    <Table.Td>
+                      {employee.employmentHistories[0]?.department?.name}
+                    </Table.Td>
+                    <Table.Td>
+                      {employee.employmentHistories[0]?.company?.name}
+                    </Table.Td>
                     <Table.Td>{employee.gender}</Table.Td>
                     <Table.Td>{employee.age}</Table.Td>
-                    <Table.Td>{employee.category}</Table.Td>
+                    {/* <Table.Td>{employee.category}</Table.Td>
                     <Table.Td>
                       {employee.highestEducationQualification
                         ? employee.highestEducationQualification.replace(
@@ -323,13 +352,17 @@ const AdvancedEmployeeSearch: React.FC = () => {
                         : "N/A"}
                     </Table.Td>
 
-                    <Table.Td>{employee.salary}</Table.Td>
+                    <Table.Td>{employee.salary}</Table.Td> */}
                   </Table.Tr>
                 ))}
               </Table.Tbody>
             </Table>
             <Group justify="center" mt="md">
-              <Pagination value={page} onChange={setPage} total={totalPages} />
+              <Pagination
+                value={page}
+                onChange={handlePageChange}
+                total={totalPages}
+              />
             </Group>
           </>
         ) : (

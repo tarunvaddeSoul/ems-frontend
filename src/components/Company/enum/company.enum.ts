@@ -1,4 +1,4 @@
-export enum PresentDaysCount {
+export enum BasicDuty {
   D26 = "D26",
   D27 = "D27",
   D28 = "D28",
