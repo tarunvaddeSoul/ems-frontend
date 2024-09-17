@@ -11,14 +11,14 @@ import {
   Select,
   Box,
   Paper,
-  Divider,
   ActionIcon,
   Stack,
   Modal,
 } from "@mantine/core";
 import { parseDateString, formatDateToString } from "../utils/date.converter";
+import { notifications } from "@mantine/notifications";
 
-const EmploymentHistoryDisplay = ({ initialValues, onSubmit }: any) => {
+const EmploymentHistoryDisplay = ({ initialValues }: { initialValues: any[] }) => {
   const [designations, setDesignations] = useState([]);
   const [employeeDepartments, setEmployeeDepartments] = useState([]);
   const [companies, setCompanies] = useState([]);
@@ -87,14 +87,78 @@ const EmploymentHistoryDisplay = ({ initialValues, onSubmit }: any) => {
     }
   };
 
-  const handleAddEmploymentRecord = (values: any) => {
-    form.insertListItem("employmentHistory", {
-      id: Date.now().toString(),
-      ...values,
-      status: "ACTIVE",
-    });
-    setIsModalOpen(false);
+  const handleUpdateEmploymentRecord = async (index: number) => {
+    const record = form.values.employmentHistory[index];
+    try {
+      const response = await axios.patch(`http://localhost:3003/employees/employment-history/${record.id}`, {
+        companyId: record.companyId,
+        designationId: record.designationId,
+        departmentId: record.departmentId,
+        salary: record.salary,
+        leavingDate: record.leavingDate ? formatDateToString(record.leavingDate) : null,
+        status: record.status
+      });
+
+      if (response.data.statusCode === 200) {
+        const updatedRecord = {
+          ...response.data.data,
+          joiningDate: parseDateString(response.data.data.joiningDate),
+          leavingDate: parseDateString(response.data.data.leavingDate),
+        };
+        form.setFieldValue(`employmentHistory.${index}`, updatedRecord);
+        
+        notifications.show({
+          title: 'Success',
+          message: 'Employment record updated successfully',
+          color: 'green',
+        });
+      }
+    } catch (error) {
+      console.error("Error updating employment record:", error);
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to update employment record. Please try again.',
+        color: 'red',
+      });
+    }
   };
+
+  const handleAddEmploymentRecord = async (values: any) => {
+    try {
+      const response = await axios.post(`http://localhost:3003/employees/${initialValues[0].employeeId}/employment-history`, {
+        companyId: values.companyName,
+        designationId: values.designationName,
+        departmentId: values.departmentName,
+        salary: values.salary,
+        joiningDate: formatDateToString(values.joiningDate),
+        status: "ACTIVE"
+      });
+
+      if (response.data.statusCode === 201) {
+        const newRecord = {
+          ...response.data.data,
+          joiningDate: parseDateString(response.data.data.joiningDate),
+          leavingDate: parseDateString(response.data.data.leavingDate),
+        };
+        form.insertListItem("employmentHistory", newRecord);
+        setIsModalOpen(false);
+        
+        notifications.show({
+          title: 'Success',
+          message: 'New employment record added successfully',
+          color: 'green',
+        });
+      }
+    } catch (error: any) {
+      console.error("Error adding employment record:", error);
+      notifications.show({
+        title: 'Error',
+        message: error.response?.data?.message || 'Failed to add new employment record. Please try again.',
+        color: 'red',
+      });
+    }
+  };
+
 
   const fields = form.values.employmentHistory.map((item: any, index: any) => (
     <Paper key={item.id} p="md" withBorder mb="md">
@@ -163,44 +227,31 @@ const EmploymentHistoryDisplay = ({ initialValues, onSubmit }: any) => {
         {...form.getInputProps(`employmentHistory.${index}.status`)}
         mt="sm"
       />
+      <Group justify="flex-end" mt="md">
+        <Button onClick={() => handleUpdateEmploymentRecord(index)}>
+          Update Record
+        </Button>
+      </Group>
     </Paper>
   ));
 
-  const handleSubmit = (values: any) => {
-    const formattedValues = {
-      ...values,
-      employmentHistory: values.employmentHistory.map((item: any) => ({
-        ...item,
-        joiningDate: formatDateToString(item.joiningDate),
-        leavingDate: formatDateToString(item.leavingDate),
-      })),
-    };
-    onSubmit(formattedValues);
-  };
-
   return (
     <Box m="xl">
-      <form onSubmit={form.onSubmit(handleSubmit)}>
-        {fields.length > 0 ? (
-          <Stack>{fields}</Stack>
-        ) : (
-          <Text c="dimmed" ta="center">
-            No employment records yet. Add one below.
-          </Text>
-        )}
-        <Group justify="center" mt="md">
-          <Button
-            onClick={() => setIsModalOpen(true)}
-            leftSection={<IconPlus size="1rem" />}
-          >
-            Add Employment Record
-          </Button>
-        </Group>
-        <Divider my="lg" />
-        <Group justify="flex-end">
-          <Button type="submit">Save Employment History</Button>
-        </Group>
-      </form>
+      {fields.length > 0 ? (
+        <Stack>{fields}</Stack>
+      ) : (
+        <Text c="dimmed" ta="center">
+          No employment records yet. Add one below.
+        </Text>
+      )}
+      <Group justify="center" mt="md">
+        <Button
+          onClick={() => setIsModalOpen(true)}
+          leftSection={<IconPlus size="1rem" />}
+        >
+          Add Employment Record
+        </Button>
+      </Group>
 
       <Modal
         opened={isModalOpen}
@@ -267,11 +318,6 @@ const AddEmploymentRecordForm = ({
         label="Joining Date"
         {...form.getInputProps("joiningDate")}
         required
-        mt="sm"
-      />
-      <DateInput
-        label="Leaving Date"
-        {...form.getInputProps("leavingDate")}
         mt="sm"
       />
       <Button type="submit" mt="md" fullWidth>

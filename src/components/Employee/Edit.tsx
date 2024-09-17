@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Container,
@@ -7,36 +7,20 @@ import {
   Button,
   Stack,
   TextInput,
-  FileInput,
   Loader,
   Text,
   Grid,
   Select,
   Textarea,
   NumberInput,
-  Switch,
-  ActionIcon,
-  Notification,
   Modal,
   Group,
-  Timeline,
-  Card,
-  Title,
-  Badge,
+  Divider,
 } from "@mantine/core";
-import { DateInput, DatePicker, DatePickerInput } from "@mantine/dates";
+import { DateInput } from "@mantine/dates";
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
-import {
-  IconAlertCircle,
-  IconBriefcase,
-  IconCalendar,
-  IconCheck,
-  IconCurrencyDollar,
-  IconPencil,
-  IconTrash,
-  IconUpload,
-} from "@tabler/icons-react";
+import { IconAlertCircle, IconCheck } from "@tabler/icons-react";
 import axios from "axios";
 import { DocumentUpload } from "./EditDocument";
 import { formatDateToString, parseDateString } from "../utils/date.converter";
@@ -246,64 +230,12 @@ export function EditEmployee() {
     }
   }, [id]);
 
-  const handleDocumentChange =
-    (field: keyof DocumentUploads) => (file: File | null) => {
-      if (file) {
-        // Here you would typically upload the file to your server/S3 and get the new URL
-        // For this example, we'll just use a placeholder URL
-        const newUrl = URL.createObjectURL(file);
-        form.setFieldValue(`documentUploads.${field}`, newUrl);
-      }
-    };
+  const handleDocumentChange = (field: string) => (file: File | null) => {
+    form.setFieldValue(`documentUploads.${field}`, file);
+  };
 
   const handleDocumentRemove = (field: keyof DocumentUploads) => () => {
     form.setFieldValue(`documentUploads.${field}`, null as any);
-  };
-
-  const handleSubmit = async (values: EmployeeData) => {
-    setSaving(true);
-    try {
-      await Promise.all([
-        axios.put(
-          `${API_BASE_URL}/${id}/contact-details`,
-          values.contactDetails
-        ),
-        axios.put(`${API_BASE_URL}/${id}/bank-details`, values.bankDetails),
-        axios.put(
-          `${API_BASE_URL}/${id}/additional-details`,
-          values.additionalDetails
-        ),
-        axios.put(
-          `${API_BASE_URL}/${id}/reference-details`,
-          values.referenceDetails
-        ),
-        axios.put(
-          `${API_BASE_URL}/${id}/document-uploads`,
-          values.documentUploads
-        ),
-        axios.put(
-          `${API_BASE_URL}/${id}/employment-history`,
-          values.employmentHistory[0]
-        ),
-      ]);
-
-      notifications.show({
-        title: "Success",
-        message: "Employee data updated successfully",
-        color: "green",
-        icon: <IconCheck />,
-      });
-    } catch (error) {
-      console.error("Error updating employee data:", error);
-      notifications.show({
-        title: "Error",
-        message: "Failed to update employee data. Please try again.",
-        color: "red",
-        icon: <IconAlertCircle />,
-      });
-    } finally {
-      setSaving(false);
-    }
   };
 
   const handleDelete = async () => {
@@ -328,28 +260,82 @@ export function EditEmployee() {
       setDeleteModalOpen(false);
     }
   };
-
+  const kebabCase = (str: string) =>
+    str.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
+  function convertToTitleCase(str: string): string {
+    return str
+      .replace(/([a-z])([A-Z])/g, "$1 $2") // Add space before each uppercase letter
+      .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2") // Handle multiple consecutive uppercase letters
+      .replace(/^./, (match) => match.toUpperCase()); // Capitalize the first letter
+  }
   const handleTabSubmit = async (tabName: TabName) => {
     setSaving(true);
     try {
-      const tabData = form.values[tabName];
-      if (tabName === "employmentHistory") {
+      const tabData = form.values[tabName] as any;
+
+      if (tabName === "documentUploads") {
+        const formData = new FormData();
+
+        // Append file fields
+        const fileFields = [
+          "photo",
+          "aadhaar",
+          "panCard",
+          "bankPassbook",
+          "markSheet",
+          "otherDocument",
+        ];
+        fileFields.forEach((field) => {
+          if (tabData[field] && tabData[field] instanceof File) {
+            formData.append(field, tabData[field]);
+          }
+        });
+
+        // Append other fields
+        if (tabData.otherDocumentRemarks) {
+          formData.append("otherDocumentRemarks", tabData.otherDocumentRemarks);
+        }
+
+        const response = await axios.patch(
+          `${API_BASE_URL}/${id}/document-uploads`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        console.log(JSON.stringify(response.data.data, null, 2));
+      } else if (tabName === "employmentHistory") {
+        console.log("Inside employmentHistory");
+        console.log(JSON.stringify(tabData, null, 2));
         // Handle employment history separately as it's an array
-        await axios.put(`${API_BASE_URL}/${id}/${tabName}`, tabData);
+        await axios.patch(
+          `${API_BASE_URL}/${id}/${kebabCase(tabName)}`,
+          tabData
+        );
       } else {
-        await axios.put(`${API_BASE_URL}/${id}/${tabName}`, tabData);
+        const { id, employeeId, createdAt, updatedAt, ...filteredObject } =
+          tabData as any;
+        await axios.patch(
+          `${API_BASE_URL}/${employeeId}/${kebabCase(tabName)}`,
+          filteredObject
+        );
       }
+
       notifications.show({
         title: "Success",
-        message: `${tabName} updated successfully`,
+        message: `${convertToTitleCase(tabName)} updated successfully`,
         color: "green",
         icon: <IconCheck />,
       });
     } catch (error) {
-      console.error(`Error updating ${tabName}:`, error);
+      console.error(`Error updating ${convertToTitleCase(tabName)}:`, error);
       notifications.show({
         title: "Error",
-        message: `Failed to update ${tabName}. Please try again.`,
+        message: `Failed to update ${convertToTitleCase(
+          tabName
+        )}. Please try again.`,
         color: "red",
         icon: <IconAlertCircle />,
       });
@@ -402,7 +388,7 @@ export function EditEmployee() {
         </Grid>
       </Paper>
 
-      <form onSubmit={form.onSubmit(handleSubmit)}>
+      <form>
         <Paper shadow="xs" p="md">
           <Tabs value={activeTab} onChange={setActiveTab}>
             <Tabs.List grow>
@@ -449,6 +435,8 @@ export function EditEmployee() {
                   {...form.getInputProps("contactDetails.pincode")}
                 />
               </Stack>
+              <Divider labelPosition="center" my="lg" />
+
               <Button
                 onClick={() => handleTabSubmit("contactDetails")}
                 loading={saving}
@@ -476,6 +464,14 @@ export function EditEmployee() {
                   {...form.getInputProps("bankDetails.bankCity")}
                 />
               </Stack>
+              <Divider labelPosition="center" my="lg" />
+
+              <Button
+                onClick={() => handleTabSubmit("bankDetails")}
+                loading={saving}
+              >
+                Save Bank Details
+              </Button>
             </Tabs.Panel>
 
             <Tabs.Panel value="additionalDetails">
@@ -547,6 +543,14 @@ export function EditEmployee() {
                   placeholder="Select date"
                 />
               </Stack>
+              <Divider labelPosition="center" my="lg" />
+
+              <Button
+                onClick={() => handleTabSubmit("additionalDetails")}
+                loading={saving}
+              >
+                Save Additional Details
+              </Button>
             </Tabs.Panel>
 
             <Tabs.Panel value="referenceDetails">
@@ -564,6 +568,14 @@ export function EditEmployee() {
                   {...form.getInputProps("referenceDetails.referenceNumber")}
                 />
               </Stack>
+              <Divider labelPosition="center" my="lg" />
+
+              <Button
+                onClick={() => handleTabSubmit("referenceDetails")}
+                loading={saving}
+              >
+                Save Reference Details
+              </Button>
             </Tabs.Panel>
 
             <Tabs.Panel value="documentUploads">
@@ -611,60 +623,22 @@ export function EditEmployee() {
                   )}
                 />
               </Stack>
-            </Tabs.Panel>
-            {/* 
-            <Tabs.Panel value="employmentHistory">
-              {form.values.employmentHistory.map((employment, index) => (
-                <EmploymentHistoryForm
-                  key={employment.id || index}
-                  form={form}
-                  index={index}
-                  onRemove={() => {
-                    const newHistory = [...form.values.employmentHistory];
-                    newHistory.splice(index, 1);
-                    form.setFieldValue("employmentHistory", newHistory);
-                  }}
-                />
-              ))}
+              <Divider labelPosition="center" my="lg" />
+
               <Button
-                onClick={() => {
-                  const newHistory = [
-                    ...form.values.employmentHistory,
-                    {} as EmploymentHistory,
-                  ];
-                  form.setFieldValue("employmentHistory", newHistory);
-                }}
-              >
-                Add Employment Record
-              </Button>
-              <Button
-                onClick={() => handleTabSubmit("employmentHistory")}
+                onClick={() => handleTabSubmit("documentUploads")}
                 loading={saving}
               >
-                Save Employment History
+                Save Documents
               </Button>
-            </Tabs.Panel> */}
-
+            </Tabs.Panel>
             <Tabs.Panel value="employmentHistory">
               <EmploymentHistoryDisplay
                 initialValues={form.values.employmentHistory}
-                onSubmit={(values: any) => {
-                  form.setFieldValue(
-                    "employmentHistory",
-                    values.employmentHistory
-                  );
-                //   handleTabSubmit("employmentHistory")();
-                }}
               />
             </Tabs.Panel>
           </Tabs>
         </Paper>
-
-        <Group justify="flex-end" mt="xl">
-          <Button type="submit" loading={saving}>
-            Save All Changes
-          </Button>
-        </Group>
       </form>
 
       <Modal
@@ -742,5 +716,3 @@ const EmploymentHistoryForm = ({ index, form }: any) => (
     />
   </Stack>
 );
-
-
