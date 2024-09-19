@@ -305,10 +305,7 @@ export function EditEmployee() {
             },
           }
         );
-        console.log(JSON.stringify(response.data.data, null, 2));
       } else if (tabName === "employmentHistory") {
-        console.log("Inside employmentHistory");
-        console.log(JSON.stringify(tabData, null, 2));
         // Handle employment history separately as it's an array
         await axios.patch(
           `${API_BASE_URL}/${id}/${kebabCase(tabName)}`,

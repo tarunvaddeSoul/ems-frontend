@@ -107,8 +107,6 @@ const AddEmployee: React.FC = () => {
           formData.append(key, String(value));
         }
       });
-  
-      console.log('Submitting form data:', values);
       
       await axios.post("http://localhost:3003/employees/", formData, {
         headers: {

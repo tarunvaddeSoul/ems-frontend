@@ -125,7 +125,6 @@ const ListEmployees: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    console.log("Deleting");
     // Handle delete logic
   };
 

@@ -18,6 +18,7 @@ export interface IEmployee {
 
 export interface Employee {
   id: string;
+  employeeId?: string;
   title?: EmployeeTitle;
   firstName: string;
   lastName: string;

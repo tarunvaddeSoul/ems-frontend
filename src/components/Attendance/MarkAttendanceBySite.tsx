@@ -16,6 +16,7 @@ import {
   ThemeIcon,
   Stack,
   FileInput,
+  Timeline,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconAlertCircle, IconCheck, IconUpload } from "@tabler/icons-react";
@@ -29,15 +30,23 @@ interface Company {
   name: string;
 }
 
+interface ProgressStep {
+  label: string;
+  status: 'waiting' | 'processing' | 'success' | 'error';
+}
+
 const MarkAttendanceBySite: React.FC = () => {
   const [active, setActive] = useState(0);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(false);
   const [value, setValue] = useState<Date | null>(null);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([
+    { label: 'Mark Attendance', status: 'waiting' },
+    { label: 'Upload Attendance Sheet', status: 'waiting' },
+  ]);
   const form = useForm({
     initialValues: {
       companyId: "",
@@ -65,15 +74,13 @@ const MarkAttendanceBySite: React.FC = () => {
 
   const fetchCompanies = async () => {
     setLoading(true);
-    setErrorMessage('');
+    setErrorMessage("");
     try {
-      const response = await axios.get(
-        "http://localhost:3003/companies"
-      );
+      const response = await axios.get("http://localhost:3003/companies");
       setCompanies(response.data.data.companies);
     } catch (error) {
       console.error("Error fetching companies:", error);
-      setErrorMessage('Failed to fetch companies. Please try again.');
+      setErrorMessage("Failed to fetch companies. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -81,23 +88,30 @@ const MarkAttendanceBySite: React.FC = () => {
 
   const fetchEmployees = async (companyId: string) => {
     setLoading(true);
-    setErrorMessage('');
+    setErrorMessage("");
     try {
       const response = await axios.get(
-        "http://localhost:3003/employees"
+        `http://localhost:3003/companies/${companyId}/employees`
       );
-      const filteredEmployees = response.data.data.data.filter(
-        (emp: any) => emp.companyId === companyId
+
+      const filteredEmployees = response.data.data.filter(
+        (emp: any) => emp.status === "ACTIVE"
       );
+
       setEmployees(filteredEmployees);
-      const initialAttendance = filteredEmployees.reduce((acc: any, emp: any) => {
-        acc[emp.id] = { selected: false, presentCount: "0" };
-        return acc;
-      }, {} as Record<string, { selected: boolean; presentCount: string }>);
+      // Initialize the attendance object with all employees
+      const initialAttendance = filteredEmployees.reduce(
+        (acc: any, emp: any) => {
+          acc[emp.employeeId] = { selected: false, presentCount: "0" };
+          return acc;
+        },
+        {} as Record<string, { selected: boolean; presentCount: string }>
+      );
+
       form.setFieldValue("attendance", initialAttendance);
     } catch (error) {
       console.error("Error fetching employees:", error);
-      setErrorMessage('Failed to fetch employees. Please try again.');
+      setErrorMessage("Failed to fetch employees. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -109,58 +123,86 @@ const MarkAttendanceBySite: React.FC = () => {
     form.setFieldValue("month", formattedDate);
   };
 
+
   const handleSubmit = async () => {
     setLoading(true);
-    setErrorMessage('');
-    setSuccessMessage('');
+    setErrorMessage("");
+    setSuccessMessage("");
+    
     try {
-      const selectedEmployees = Object.entries(form.values.attendance)
-        .filter(([_, value]) => value.selected);
-
+      const selectedEmployees = Object.entries(form.values.attendance).filter(
+        ([_, value]) => value.selected
+      );
+      
       if (selectedEmployees.length === 0) {
-        setErrorMessage('No employees selected');
+        setErrorMessage("No employees selected");
         return;
       }
-
-      const attendanceRecords = selectedEmployees.map(([employeeId, value]) => ({
-        employeeId,
-        companyId: form.values.companyId,
-        month: form.values.month,
-        presentCount: parseInt(value.presentCount),
-      }));
-
+      
+      const attendanceRecords = selectedEmployees.map(
+        ([employeeId, value]) => ({
+          employeeId,
+          companyId: form.values.companyId,
+          month: form.values.month,
+          presentCount: parseInt(value.presentCount),
+        })
+      );
+      
       const payload = {
         records: attendanceRecords,
       };
-
-      await axios.post('http://localhost:3003/attendance/bulk', payload);
-      setSuccessMessage('Attendance marked successfully');
-      setActive(4); // Move to the success step
-
-      // Upload file if present
+      
+      setProgressSteps(prev => [
+        { ...prev[0], status: 'processing' },
+        prev[1],
+      ]);
+      
+      await axios.post("http://localhost:3003/attendance/bulk", payload);
+      
+      setProgressSteps(prev => [
+        { ...prev[0], status: 'success' },
+        prev[1],
+      ]);
+      
+      setSuccessMessage("Attendance marked successfully");
+      
       if (form.values.file) {
+        setProgressSteps(prev => [
+          prev[0],
+          { ...prev[1], status: 'processing' },
+        ]);
+        
         const formData = new FormData();
-        formData.append('companyId', form.values.companyId);
-        formData.append('month', form.values.month);
-        formData.append('attendanceSheet', form.values.file);
-
-        await axios.post('http://localhost:3003/attendance/upload', formData, {
+        formData.append("companyId", form.values.companyId);
+        formData.append("month", form.values.month);
+        formData.append("attendanceSheet", form.values.file);
+        
+        await axios.post("http://localhost:3003/attendance/upload", formData, {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            "Content-Type": "multipart/form-data",
           },
         });
-        setSuccessMessage('Attendance file uploaded successfully');
+        
+        setProgressSteps(prev => [
+          prev[0],
+          { ...prev[1], status: 'success' },
+        ]);
+        
+        setSuccessMessage(prev => `${prev}. Attendance file uploaded successfully`);
       }
+      
+      setActive(4); // Move to the success step
     } catch (error) {
-      console.error('Error marking attendance:', error);
-      setErrorMessage('Failed to mark attendance. Please try again.');
+      console.error("Error marking attendance:", error);
+      setErrorMessage("Failed to mark attendance. Please try again.");
+      setProgressSteps(prev => prev.map(step => ({ ...step, status: 'error' })));
     } finally {
       setLoading(false);
     }
   };
-  
+
   const nextStep = () => {
-    setErrorMessage('');
+    setErrorMessage("");
     if (form.validate().hasErrors) return;
     if (active === 0) {
       fetchEmployees(form.values.companyId);
@@ -169,29 +211,48 @@ const MarkAttendanceBySite: React.FC = () => {
   };
 
   const prevStep = () => {
-    setErrorMessage('');
+    setErrorMessage("");
     setActive((current) => (current > 0 ? current - 1 : current));
   };
 
   const resetForm = () => {
     form.reset();
     setActive(0);
-    setErrorMessage('');
-    setSuccessMessage('');
+    setErrorMessage("");
+    setSuccessMessage("");
     setValue(null);
     setEmployees([]);
   };
 
+  const ProgressTimeline = () => (
+    <Timeline active={progressSteps.findIndex(step => step.status === 'processing')} bulletSize={24} lineWidth={2}>
+      {progressSteps.map((step, index) => (
+        <Timeline.Item
+          key={index}
+          title={step.label}
+          color={step.status === 'success' ? 'green' : step.status === 'error' ? 'red' : 'blue'}
+        >
+          {step.status === 'processing' && 'In progress...'}
+          {step.status === 'success' && 'Completed'}
+          {step.status === 'error' && 'Error occurred'}
+        </Timeline.Item>
+      ))}
+    </Timeline>
+  );
+
   return (
     <Container size="lg">
       <Paper shadow="sm" p="xl" withBorder>
-        <LoadingOverlay
-          visible={loading}
-          zIndex={1000}
-          overlayProps={{ radius: 'sm', blur: 2 }}
-        />
-        <Title order={2} mb="lg">Mark Attendance</Title>
-        <Stepper active={active} onStepClick={setActive} mb="xl" allowNextStepsSelect={false}>
+        {loading && <ProgressTimeline />}
+        <Title order={2} mb="lg">
+          Mark Attendance
+        </Title>
+        <Stepper
+          active={active}
+          onStepClick={setActive}
+          mb="xl"
+          allowNextStepsSelect={false}
+        >
           <Stepper.Step label="Select Company" description="Choose a company">
             <Select
               label="Company"
@@ -200,16 +261,13 @@ const MarkAttendanceBySite: React.FC = () => {
                 value: company.id,
                 label: company.name,
               }))}
-              {...form.getInputProps('companyId')}
+              {...form.getInputProps("companyId")}
               error={form.errors.companyId}
             />
           </Stepper.Step>
 
           <Stepper.Step label="Select Month" description="Choose a month">
-            <MonthPicker
-              value={value}
-              onChange={handleMonthChange}
-            />
+            <MonthPicker value={value} onChange={handleMonthChange} />
           </Stepper.Step>
 
           <Stepper.Step
@@ -234,12 +292,12 @@ const MarkAttendanceBySite: React.FC = () => {
                 </Table.Thead>
                 <Table.Tbody>
                   {employees.map((employee) => (
-                    <Table.Tr key={employee.id}>
+                    <Table.Tr key={employee.employeeId}>
                       <Table.Td>
                         <Checkbox
                           {...form.getInputProps(
-                            `attendance.${employee.id}.selected`,
-                            { type: 'checkbox' }
+                            `attendance.${employee.employeeId}.selected`,
+                            { type: "checkbox" }
                           )}
                         />
                       </Table.Td>
@@ -252,9 +310,12 @@ const MarkAttendanceBySite: React.FC = () => {
                             value: i.toString(),
                             label: i.toString(),
                           }))}
-                          disabled={!form.values.attendance[employee.id]?.selected}
+                          disabled={
+                            !form.values.attendance[employee.employeeId as any]
+                              ?.selected
+                          }
                           {...form.getInputProps(
-                            `attendance.${employee.id}.presentCount`
+                            `attendance.${employee.employeeId}.presentCount`
                           )}
                         />
                       </Table.Td>
@@ -263,7 +324,9 @@ const MarkAttendanceBySite: React.FC = () => {
                 </Table.Tbody>
               </Table>
             ) : (
-              <Text c="dimmed">No employees found for the selected company.</Text>
+              <Text c="dimmed">
+                No employees found for the selected company.
+              </Text>
             )}
             <Alert
               icon={<IconAlertCircle size="1rem" />}
@@ -271,7 +334,8 @@ const MarkAttendanceBySite: React.FC = () => {
               color="blue"
               mt="md"
             >
-              Please ensure you've selected employees and entered their attendance.
+              Please ensure you've selected employees and entered their
+              attendance.
             </Alert>
           </Stepper.Step>
 
@@ -284,7 +348,7 @@ const MarkAttendanceBySite: React.FC = () => {
               placeholder="Choose file"
               accept=".jpeg,.png"
               leftSection={<IconUpload size="1rem" />}
-              {...form.getInputProps('file')}
+              {...form.getInputProps("file")}
             />
             <Alert
               icon={<IconAlertCircle size="1rem" />}
@@ -322,13 +386,9 @@ const MarkAttendanceBySite: React.FC = () => {
               </Button>
             )}
             {active === 3 ? (
-              <Button onClick={handleSubmit}>
-                Submit
-              </Button>
+              <Button onClick={handleSubmit}>Submit</Button>
             ) : (
-              <Button onClick={nextStep}>
-                Next step
-              </Button>
+              <Button onClick={nextStep}>Next step</Button>
             )}
           </Group>
         )}
@@ -338,3 +398,4 @@ const MarkAttendanceBySite: React.FC = () => {
 };
 
 export default MarkAttendanceBySite;
+

@@ -32,7 +32,6 @@ const GetEmployeeByPage: React.FC = () => {
         const response = await axios.get(
           `http://localhost:3003/employees/${id}`
         );
-        console.log(JSON.stringify(response.data.data, null, 2));
         setEmployee(response.data.data);
       } catch (error) {
         console.error("Error fetching employee data:", error);

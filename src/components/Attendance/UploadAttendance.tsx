@@ -30,8 +30,8 @@ const UploadAttendance: React.FC = () => {
   const [active, setActive] = useState(0);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const form = useForm({
     initialValues: {
@@ -60,15 +60,13 @@ const UploadAttendance: React.FC = () => {
 
   const fetchCompanies = async () => {
     setLoading(true);
-    setErrorMessage('');
+    setErrorMessage("");
     try {
-      const response = await axios.get(
-        "http://localhost:3003/companies"
-      );
+      const response = await axios.get("http://localhost:3003/companies");
       setCompanies(response.data.data.companies);
     } catch (error) {
       console.error("Error fetching companies:", error);
-      setErrorMessage('Failed to fetch companies. Please try again.');
+      setErrorMessage("Failed to fetch companies. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -81,59 +79,66 @@ const UploadAttendance: React.FC = () => {
 
   const handleSubmit = async () => {
     setLoading(true);
-    setErrorMessage('');
-    setSuccessMessage('');
+    setErrorMessage("");
+    setSuccessMessage("");
     try {
       const formData = new FormData();
-      formData.append('companyId', form.values.companyId);
-      formData.append('month', form.values.month);
+      formData.append("companyId", form.values.companyId);
+      formData.append("month", form.values.month);
       if (form.values.file) {
-        formData.append('attendanceSheet', form.values.file);
+        formData.append("attendanceSheet", form.values.file);
       }
 
-      await axios.post('http://localhost:3003/attendance/upload', formData, {
+      await axios.post("http://localhost:3003/attendance/upload", formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       });
-      setSuccessMessage('Attendance file uploaded successfully');
+      setSuccessMessage("Attendance file uploaded successfully");
       setActive(4); // Move to the success step
     } catch (error) {
-      console.error('Error uploading attendance:', error);
-      setErrorMessage('Failed to upload attendance file. Please try again.');
+      console.error("Error uploading attendance:", error);
+      setErrorMessage("Failed to upload attendance file. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const nextStep = () => {
-    setErrorMessage('');
+    setErrorMessage("");
     if (form.validate().hasErrors) return;
     setActive((current) => (current < 3 ? current + 1 : current));
   };
 
   const prevStep = () => {
-    setErrorMessage('');
+    setErrorMessage("");
     setActive((current) => (current > 0 ? current - 1 : current));
   };
 
   const resetForm = () => {
     form.reset();
     setActive(0);
-    setErrorMessage('');
-    setSuccessMessage('');
+    setErrorMessage("");
+    setSuccessMessage("");
   };
 
   return (
-    <Container size="md">
+    <Container size="lg">
       <Paper shadow="sm" p="xl" withBorder>
-        <LoadingOverlay
+        {/* <LoadingOverlay
           visible={loading}
           zIndex={1000}
           overlayProps={{ radius: 'sm', blur: 2 }}
-        />
-        <Title order={2} mb="lg">Upload Attendance</Title>
-        <Stepper active={active} onStepClick={setActive} mb="xl" allowNextStepsSelect={false}>
+        /> */}
+        <Title order={2} mb="lg">
+          Upload Attendance
+        </Title>
+        <Stepper
+          active={active}
+          onStepClick={setActive}
+          mb="xl"
+          allowNextStepsSelect={false}
+        >
           <Stepper.Step label="Select Company" description="Choose a company">
             <Select
               label="Company"
@@ -142,28 +147,31 @@ const UploadAttendance: React.FC = () => {
                 value: company.id,
                 label: company.name,
               }))}
-              {...form.getInputProps('companyId')}
+              {...form.getInputProps("companyId")}
               error={form.errors.companyId}
             />
           </Stepper.Step>
 
           <Stepper.Step label="Select Month" description="Choose a month">
             <MonthPicker
-            //   label="Select Month"
-            //   placeholder="Pick a month"
+              //   label="Select Month"
+              //   placeholder="Pick a month"
               value={form.values.month ? new Date(form.values.month) : null}
               onChange={handleMonthChange}
-            //   error={form.errors.month}
+              //   error={form.errors.month}
             />
           </Stepper.Step>
 
-          <Stepper.Step label="Upload File" description="Upload attendance file">
+          <Stepper.Step
+            label="Upload File"
+            description="Upload attendance file"
+          >
             <FileInput
               label="Upload Attendance File"
               placeholder="Click to select file"
               accept=".jpeg,.png"
               leftSection={<IconUpload size={14} />}
-              {...form.getInputProps('file')}
+              {...form.getInputProps("file")}
               error={form.errors.file}
               required
             />
@@ -202,7 +210,7 @@ const UploadAttendance: React.FC = () => {
             )}
             {active !== 3 && (
               <Button onClick={active === 2 ? handleSubmit : nextStep}>
-                {active === 2 ? 'Upload' : 'Next step'}
+                {active === 2 ? "Upload" : "Next step"}
               </Button>
             )}
           </Group>

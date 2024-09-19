@@ -29,7 +29,6 @@ export const parseDateString = (dateString: string | null | undefined): Date | n
 };
 
 export const formatDateToString = (date: Date | null): string | null => {
-  console.log('hii')
   if (!date) return null;
   return `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`;
 };

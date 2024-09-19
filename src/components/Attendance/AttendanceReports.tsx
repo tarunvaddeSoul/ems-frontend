@@ -17,12 +17,18 @@ import {
   ComboboxItem,
   Progress,
 } from "@mantine/core";
-import { IconAlertCircle, IconCheck } from "@tabler/icons-react";
+import {
+  IconAlertCircle,
+  IconCheck,
+  IconDownload,
+  IconEye,
+} from "@tabler/icons-react";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { useLocalStorage } from "@mantine/hooks";
 
+// Types
 interface Company {
   id: string;
   name: string;
@@ -41,11 +47,109 @@ interface AttendanceData {
   employeeName: string;
   companyName: string;
   designationName: string;
+  departmentName: string;
   presentCount: number;
+  attendanceSheetUrl: string;
 }
 
+// Constants
 const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL || "http://localhost:3003";
+
+// Utility functions
+const formatMonthLabel = (monthString: string): string => {
+  const [year, month] = monthString.split("-");
+  const date = new Date(parseInt(year), parseInt(month) - 1);
+  return date.toLocaleString("default", { month: "long", year: "numeric" });
+};
+
+// Custom hooks
+const useAttendanceData = () => {
+  const [attendanceData, setAttendanceData] = useState<AttendanceData[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const fetchAttendanceData = useCallback(
+    async (companyId: string, month: string) => {
+      setLoading(true);
+      setError("");
+      try {
+        const response = await axios.get<{ data: AttendanceData[] }>(
+          `${API_BASE_URL}/attendance/records-by-company-and-month`,
+          { params: { companyId, month } }
+        );
+        setAttendanceData(response.data.data);
+      } catch (error) {
+        console.error("Error fetching attendance data:", error);
+        setError("Failed to fetch attendance data. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  return { attendanceData, loading, error, fetchAttendanceData };
+};
+
+// Components
+const ErrorAlert: React.FC<{ message: string }> = ({ message }) => (
+  <Alert
+    icon={<IconAlertCircle size="1rem" />}
+    title="Error"
+    color="red"
+    mt="xl"
+  >
+    {message}
+  </Alert>
+);
+
+const SuccessAlert: React.FC<{ message: string }> = ({ message }) => (
+  <Alert icon={<IconCheck size="1rem" />} title="Success" color="green" mt="xl">
+    {message}
+  </Alert>
+);
+
+const AttendanceTable: React.FC<{ data: AttendanceData[] }> = ({ data }) => (
+  <Table>
+    <thead>
+      <tr>
+        <th>Employee ID</th>
+        <th>Employee Name</th>
+        <th>Company Name</th>
+        <th>Designation</th>
+        <th>Department</th>
+        <th>Present Count</th>
+        <th>Attendance Sheet</th>
+      </tr>
+    </thead>
+    <tbody>
+      {data.map((item, index) => (
+        <tr key={index}>
+          <td>{item.employeeID}</td>
+          <td>{item.employeeName}</td>
+          <td>{item.companyName}</td>
+          <td>{item.designationName}</td>
+          <td>{item.departmentName}</td>
+          <td>{item.presentCount}</td>
+          <td>
+            <Button
+              component="a"
+              href={item.attendanceSheetUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              size="xs"
+              variant="outline"
+              leftSection={<IconDownload size="1rem" />}
+            >
+              Download
+            </Button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </Table>
+);
 
 const AttendanceReports: React.FC = () => {
   const [active, setActive] = useState(0);
@@ -59,18 +163,18 @@ const AttendanceReports: React.FC = () => {
     key: "selectedMonth",
     defaultValue: null,
   });
-  const [attendanceData, setAttendanceData] = useState<AttendanceData[]>([]);
-  const [loading, setLoading] = useState(false);
   const [companyLoading, setCompanyLoading] = useState(false);
   const [monthLoading, setMonthLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [reportProgress, setReportProgress] = useState(0);
   const [reportType, setReportType] = useState<"pdf" | "excel">("pdf");
+
+  const { attendanceData, loading, error, fetchAttendanceData } =
+    useAttendanceData();
+
   const fetchCompanies = useCallback(async () => {
     setCompanyLoading(true);
-    setErrorMessage("");
     try {
       const response = await axios.get<{ data: { companies: Company[] } }>(
         `${API_BASE_URL}/companies`
@@ -83,11 +187,38 @@ const AttendanceReports: React.FC = () => {
       );
     } catch (error) {
       console.error("Error fetching companies:", error);
-      setErrorMessage(
-        "Failed to fetch companies. Please check your internet connection and try again."
-      );
     } finally {
       setCompanyLoading(false);
+    }
+  }, []);
+
+  const fetchAttendanceMonths = useCallback(async (companyId: string) => {
+    setMonthLoading(true);
+    setMonths([]);
+    setSelectedMonth(null);
+
+    try {
+      const response = await axios.get<{ data: AttendanceRecord[] }>(
+        `${API_BASE_URL}/attendance/${companyId}`
+      );
+      const attendanceRecords = response.data.data;
+
+      if (attendanceRecords.length === 0) {
+        throw new Error("No attendance records found for this company.");
+      }
+
+      const uniqueMonths = Array.from(
+        new Set(attendanceRecords.map((record) => record.month))
+      );
+      const formattedMonths: ComboboxItem[] = uniqueMonths.map((month) => ({
+        value: month,
+        label: formatMonthLabel(month),
+      }));
+      setMonths(formattedMonths);
+    } catch (error) {
+      console.error("Error fetching attendance months:", error);
+    } finally {
+      setMonthLoading(false);
     }
   }, []);
 
@@ -99,97 +230,18 @@ const AttendanceReports: React.FC = () => {
     if (selectedCompany) {
       fetchAttendanceMonths(selectedCompany);
     }
-  }, [selectedCompany]);
-
-  const fetchAttendanceMonths = useCallback(async (companyId: string) => {
-    setMonthLoading(true);
-    setErrorMessage("");
-    setMonths([]);
-    setSelectedMonth(null);
-
-    try {
-      const response = await axios.get<{ data: AttendanceRecord[] }>(
-        `${API_BASE_URL}/attendance/${companyId}`
-      );
-      const attendanceRecords = response.data.data;
-
-      if (attendanceRecords.length === 0) {
-        setErrorMessage(
-          "No attendance records found for this company. Please select a different company or contact support."
-        );
-      } else {
-        const uniqueMonths = Array.from(
-          new Set(attendanceRecords.map((record) => record.month))
-        );
-        const formattedMonths: ComboboxItem[] = uniqueMonths.map((month) => ({
-          value: month,
-          label: formatMonthLabel(month),
-        }));
-        setMonths(formattedMonths);
-      }
-    } catch (error) {
-      console.error("Error fetching attendance months:", error);
-      setErrorMessage(
-        "Failed to fetch attendance months. Please try again or contact support if the problem persists."
-      );
-    } finally {
-      setMonthLoading(false);
-    }
-  }, []);
-
-  const formatMonthLabel = (monthString: string): string => {
-    const [year, month] = monthString.split("-");
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    return date.toLocaleString("default", { month: "long", year: "numeric" });
-  };
-  const handleGenerateReport = (type: "pdf" | "excel") => {
-    setConfirmModalOpen(true);
-    // Store the report type to use in the confirmation
-    setReportType(type);
-  };
-
-  const confirmGenerateReport = () => {
-    setConfirmModalOpen(false);
-    if (reportType === "pdf") {
-      generatePDF();
-    } else {
-      generateExcel();
-    }
-  };
-
-  const fetchAttendanceData = useCallback(async () => {
-    if (!selectedCompany || !selectedMonth) return;
-
-    setLoading(true);
-    setErrorMessage("");
-    try {
-      const response = await axios.get<{ data: AttendanceData[] }>(
-        `${API_BASE_URL}/attendance/records-by-company-and-month`,
-        {
-          params: { companyId: selectedCompany, month: selectedMonth },
-        }
-      );
-      setAttendanceData(response.data.data);
-    } catch (error) {
-      console.error("Error fetching attendance data:", error);
-      setErrorMessage("Failed to fetch attendance data. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedCompany, selectedMonth]);
+  }, [selectedCompany, fetchAttendanceMonths]);
 
   const handleNext = () => {
     if (active === 0 && selectedCompany) {
       setActive(1);
     } else if (active === 1 && selectedMonth) {
-      fetchAttendanceData();
+      fetchAttendanceData(selectedCompany as any, selectedMonth);
       setActive(2);
     }
   };
 
-  const handleMonthChange = (value: string | null) => {
-    setSelectedMonth(value);
-  };
+  const handleBack = () => setActive((prevActive) => prevActive - 1);
 
   const handleCompanyChange = (value: string | null) => {
     setSelectedCompany(value);
@@ -200,13 +252,26 @@ const AttendanceReports: React.FC = () => {
     }
   };
 
-  const handleBack = () => {
-    setActive((prevActive) => prevActive - 1);
+  const handleMonthChange = (value: string | null) => setSelectedMonth(value);
+
+  const handleGenerateReport = (type: "pdf" | "excel") => {
+    setConfirmModalOpen(true);
+    setReportType(type);
+  };
+
+  const confirmGenerateReport = () => {
+    setConfirmModalOpen(false);
+    setReportProgress(0);
+
+    if (reportType === "pdf") {
+      generatePDF();
+    } else {
+      generateExcel();
+    }
   };
 
   const generatePDF = () => {
-    setReportProgress(0);
-    const totalSteps = attendanceData.length + 2; // +2 for initialization and saving
+    const totalSteps = attendanceData.length + 2;
     let currentStep = 0;
 
     const doc = new jsPDF();
@@ -221,10 +286,11 @@ const AttendanceReports: React.FC = () => {
           "Employee Name",
           "Company Name",
           "Designation",
+          "Department",
           "Present Count",
         ],
       ],
-      body: attendanceData.map((item, index) => {
+      body: attendanceData.map((item) => {
         currentStep++;
         setReportProgress((currentStep / totalSteps) * 100);
         return [
@@ -232,31 +298,31 @@ const AttendanceReports: React.FC = () => {
           item.employeeName,
           item.companyName,
           item.designationName,
+          item.departmentName,
           item.presentCount,
         ];
       }),
     });
 
-    doc.save(`attendance_report_${companies[0].label}_${months[0].label}.pdf`);
+    doc.save(`attendance_report_${selectedCompany}_${selectedMonth}.pdf`);
     setReportProgress(100);
   };
-  const canProceed = () => {
-    if (active === 0) {
-      return !!selectedCompany;
-    } else if (active === 1) {
-      return !!selectedMonth;
-    }
-    return false;
-  };
+
   const generateExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(attendanceData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
-    XLSX.writeFile(workbook, `attendance_report_${companies[0].label}_${months[0].label}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `attendance_report_${selectedCompany}_${selectedMonth}.xlsx`
+    );
+    setReportProgress(100);
   };
 
-  const previewData = () => {
-    setPreviewModalOpen(true);
+  const canProceed = () => {
+    if (active === 0) return !!selectedCompany;
+    if (active === 1) return !!selectedMonth;
+    return false;
   };
 
   return (
@@ -270,6 +336,7 @@ const AttendanceReports: React.FC = () => {
         <Title order={2} mb="lg">
           Attendance Reports
         </Title>
+
         <Stepper
           active={active}
           onStepClick={setActive}
@@ -284,10 +351,10 @@ const AttendanceReports: React.FC = () => {
               onChange={handleCompanyChange}
               required
               disabled={companyLoading}
-              error={errorMessage && active === 0 ? errorMessage : null}
             />
             {companyLoading && <Loader size="sm" mt="xs" />}
           </Stepper.Step>
+
           <Stepper.Step label="Select Month" description="Choose a month">
             <Select
               label="Select Month"
@@ -297,20 +364,31 @@ const AttendanceReports: React.FC = () => {
               onChange={handleMonthChange}
               disabled={months.length === 0 || monthLoading}
               required
-              error={errorMessage && active === 1 ? errorMessage : null}
             />
             {monthLoading && <Loader size="sm" mt="xs" />}
           </Stepper.Step>
+
           <Stepper.Step
             label="Generate Report"
             description="Choose report format"
           >
-            <Group>
-              <Button onClick={previewData}>Preview Data</Button>
-              <Button onClick={() => handleGenerateReport("pdf")}>
+            <Group justify="center">
+              <Button
+                leftSection={<IconEye size="1rem" />}
+                onClick={() => setPreviewModalOpen(true)}
+              >
+                Preview Data
+              </Button>
+              <Button
+                leftSection={<IconDownload size="1rem" />}
+                onClick={() => handleGenerateReport("pdf")}
+              >
                 Generate PDF
               </Button>
-              <Button onClick={() => handleGenerateReport("excel")}>
+              <Button
+                leftSection={<IconDownload size="1rem" />}
+                onClick={() => handleGenerateReport("excel")}
+              >
                 Generate Excel
               </Button>
             </Group>
@@ -330,16 +408,7 @@ const AttendanceReports: React.FC = () => {
           )}
         </Group>
 
-        {errorMessage && (
-          <Alert
-            icon={<IconAlertCircle size="1rem" />}
-            title="Error"
-            color="red"
-            mt="xl"
-          >
-            {errorMessage}
-          </Alert>
-        )}
+        {error && <ErrorAlert message={error} />}
 
         <Modal
           opened={previewModalOpen}
@@ -348,28 +417,7 @@ const AttendanceReports: React.FC = () => {
           size="xl"
         >
           {attendanceData.length > 0 ? (
-            <Table>
-              <thead>
-                <tr>
-                  <th>Employee ID</th>
-                  <th>Employee Name</th>
-                  <th>Company Name</th>
-                  <th>Designation</th>
-                  <th>Present Count</th>
-                </tr>
-              </thead>
-              <tbody>
-                {attendanceData.map((item, index) => (
-                  <tr key={index}>
-                    <td>{item.employeeID}</td>
-                    <td>{item.employeeName}</td>
-                    <td>{item.companyName}</td>
-                    <td>{item.designationName}</td>
-                    <td>{item.presentCount}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
+            <AttendanceTable data={attendanceData} />
           ) : (
             <Text>No data available for the selected company and month.</Text>
           )}
@@ -395,27 +443,20 @@ const AttendanceReports: React.FC = () => {
         </Modal>
 
         {reportProgress > 0 && reportProgress < 100 && (
-          <Progress.Root size="xl">
-            <Progress.Section value={35} color="cyan">
-              <Progress.Label>{`${Math.round(
-                reportProgress
-              )}%`}</Progress.Label>
-            </Progress.Section>
-          </Progress.Root>
+          <Progress
+            value={reportProgress}
+            size="xl"
+            mt="md"
+            transitionDuration={200}
+          />
         )}
 
         {reportProgress === 100 && (
-          <Alert
-            icon={<IconCheck size="1rem" />}
-            title="Success"
-            color="green"
-            mt="xl"
-          >
-            Report generated successfully!
-          </Alert>
+          <SuccessAlert message="Report generated successfully!" />
         )}
       </Paper>
     </Container>
   );
 };
+
 export default AttendanceReports;
