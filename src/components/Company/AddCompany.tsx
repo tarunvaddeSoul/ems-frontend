@@ -13,7 +13,7 @@ const AddCompany: React.FC = () => {
     setIsLoading(true);
     try {
       await axios.post('http://localhost:3003/companies', values);
-      navigate('/companies/list');
+      navigate('/companies');
     } catch (error) {
       console.error('Error creating company:', error);
       // Handle error (e.g., show error notification)

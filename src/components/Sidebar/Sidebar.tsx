@@ -102,12 +102,12 @@ const Sidebar = ({ sidebarOpen }: { sidebarOpen: boolean }) => {
           label="Advanced Search"
           styles={{ ...linkStyle, paddingLeft: 40 }}
         />
-                <SidebarItem
+                {/* <SidebarItem
           to="/employees/edit"
           icon={<IconSearch size={20} />}
           label="Edit"
           styles={{ ...linkStyle, paddingLeft: 40 }}
-        />
+        /> */}
       </Collapse>
 
       <SidebarItem

@@ -193,6 +193,7 @@ export function AuthForm(props: PaperProps) {
                 required
                 label="Department"
                 placeholder="Select your department"
+                searchable
                 data={departments.map(dept => ({ value: dept.id, label: dept.name }))}
                 {...form.getInputProps('departmentId')}
                 radius="md"
@@ -201,6 +202,7 @@ export function AuthForm(props: PaperProps) {
                 required
                 label="Role"
                 placeholder="Select your role"
+                searchable
                 data={[
                   { value: 'USER', label: 'User' },
                   { value: 'ADMIN', label: 'Admin' },

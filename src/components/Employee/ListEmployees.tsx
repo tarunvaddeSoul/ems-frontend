@@ -188,7 +188,7 @@ const ListEmployees: React.FC = () => {
         </Group>
       </Table.Td>
       <Table.Td>
-        <Group gap="xs" justify="flex-end">
+        <Group gap="xs" justify="center">
           <ActionIcon
             variant="subtle"
             color="blue"
@@ -308,7 +308,17 @@ const ListEmployees: React.FC = () => {
               <Table.Th>Actions</Table.Th>
             </Table.Tr>
           </Table.Thead>
-          <Table.Tbody>{rows}</Table.Tbody>
+          <Table.Tbody>
+            {rows && rows.length > 0 ? (
+              rows
+            ) : (
+              <Table.Tr>
+                <Table.Td colSpan={5}>
+                  <Text ta="center">No employees found</Text>
+                </Table.Td>
+              </Table.Tr>
+            )}{" "}
+          </Table.Tbody>
         </Table>
       </Table.ScrollContainer>
 

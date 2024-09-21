@@ -82,6 +82,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
       bankPassbook: null,
       markSheet: null,
       otherDocument: null,
+      otherDocumentRemarks: "",
       currentCompanySalary: 0,
       aadhaarNumber: "",
       ...initialValues,
@@ -564,7 +565,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
             leftSection={<IconUpload size={14} />}
             placeholder="Upload photo"
             {...form.getInputProps("photo")}
-            accept="image/*"
+            accept="application/pdf,image/*"
           />
         </Grid.Col>
         <Grid.Col span={6}>
@@ -612,6 +613,16 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
             accept="application/pdf,image/*"
           />
         </Grid.Col>
+        {form.values.otherDocument && (
+          <Grid.Col span={6}>
+            <TextInput
+              required
+              label="Other Document Remarks"
+              placeholder="Enter remarks for the other document"
+              {...form.getInputProps("otherDocumentRemarks")}
+            />
+          </Grid.Col>
+        )}
       </Grid>
 
       <Group justify="flex-end" mt="xl">

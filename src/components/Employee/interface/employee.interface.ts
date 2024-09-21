@@ -65,7 +65,7 @@ export interface Employee {
   medicalCertificateDate?: string;
   photo?: string;
   aadhaar?: string;
-  panCardUpload?: string;
+  panCard?: string;
   bankPassbook?: string;
   markSheet?: string;
   otherDocument?: string;
@@ -207,6 +207,7 @@ export interface EmployeeFormValues {
   bankPassbook: File | null | undefined | string;
   markSheet: File | null | undefined | string;
   otherDocument: File | null | undefined | string;
+  otherDocumentRemarks?: string;
   // salary: number;
   aadhaarNumber: string;
 }
