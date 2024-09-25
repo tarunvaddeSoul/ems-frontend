@@ -17,6 +17,7 @@ import {
   Stack,
   FileInput,
   Timeline,
+  Flex,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconAlertCircle, IconCheck, IconUpload } from "@tabler/icons-react";
@@ -32,7 +33,7 @@ interface Company {
 
 interface ProgressStep {
   label: string;
-  status: 'waiting' | 'processing' | 'success' | 'error';
+  status: "waiting" | "processing" | "success" | "error";
 }
 
 const MarkAttendanceBySite: React.FC = () => {
@@ -44,8 +45,8 @@ const MarkAttendanceBySite: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [progressSteps, setProgressSteps] = useState<ProgressStep[]>([
-    { label: 'Mark Attendance', status: 'waiting' },
-    { label: 'Upload Attendance Sheet', status: 'waiting' },
+    { label: "Mark Attendance", status: "waiting" },
+    { label: "Upload Attendance Sheet", status: "waiting" },
   ]);
   const form = useForm({
     initialValues: {
@@ -123,22 +124,21 @@ const MarkAttendanceBySite: React.FC = () => {
     form.setFieldValue("month", formattedDate);
   };
 
-
   const handleSubmit = async () => {
     setLoading(true);
     setErrorMessage("");
     setSuccessMessage("");
-    
+
     try {
       const selectedEmployees = Object.entries(form.values.attendance).filter(
         ([_, value]) => value.selected
       );
-      
+
       if (selectedEmployees.length === 0) {
         setErrorMessage("No employees selected");
         return;
       }
-      
+
       const attendanceRecords = selectedEmployees.map(
         ([employeeId, value]) => ({
           employeeId,
@@ -147,55 +147,56 @@ const MarkAttendanceBySite: React.FC = () => {
           presentCount: parseInt(value.presentCount),
         })
       );
-      
+
       const payload = {
         records: attendanceRecords,
       };
-      
-      setProgressSteps(prev => [
-        { ...prev[0], status: 'processing' },
+
+      setProgressSteps((prev) => [
+        { ...prev[0], status: "processing" },
         prev[1],
       ]);
-      
+
       await axios.post("http://localhost:3003/attendance/bulk", payload);
-      
-      setProgressSteps(prev => [
-        { ...prev[0], status: 'success' },
-        prev[1],
-      ]);
-      
+
+      setProgressSteps((prev) => [{ ...prev[0], status: "success" }, prev[1]]);
+
       setSuccessMessage("Attendance marked successfully");
-      
+
       if (form.values.file) {
-        setProgressSteps(prev => [
+        setProgressSteps((prev) => [
           prev[0],
-          { ...prev[1], status: 'processing' },
+          { ...prev[1], status: "processing" },
         ]);
-        
+
         const formData = new FormData();
         formData.append("companyId", form.values.companyId);
         formData.append("month", form.values.month);
         formData.append("attendanceSheet", form.values.file);
-        
+
         await axios.post("http://localhost:3003/attendance/upload", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
-        
-        setProgressSteps(prev => [
+
+        setProgressSteps((prev) => [
           prev[0],
-          { ...prev[1], status: 'success' },
+          { ...prev[1], status: "success" },
         ]);
-        
-        setSuccessMessage(prev => `${prev}. Attendance file uploaded successfully`);
+
+        setSuccessMessage(
+          (prev) => `${prev}. Attendance file uploaded successfully`
+        );
       }
-      
+
       setActive(4); // Move to the success step
     } catch (error) {
       console.error("Error marking attendance:", error);
       setErrorMessage("Failed to mark attendance. Please try again.");
-      setProgressSteps(prev => prev.map(step => ({ ...step, status: 'error' })));
+      setProgressSteps((prev) =>
+        prev.map((step) => ({ ...step, status: "error" }))
+      );
     } finally {
       setLoading(false);
     }
@@ -225,23 +226,33 @@ const MarkAttendanceBySite: React.FC = () => {
   };
 
   const ProgressTimeline = () => (
-    <Timeline active={progressSteps.findIndex(step => step.status === 'processing')} bulletSize={24} lineWidth={2}>
+    <Timeline
+      active={progressSteps.findIndex((step) => step.status === "processing")}
+      bulletSize={24}
+      lineWidth={2}
+    >
       {progressSteps.map((step, index) => (
         <Timeline.Item
           key={index}
           title={step.label}
-          color={step.status === 'success' ? 'green' : step.status === 'error' ? 'red' : 'blue'}
+          color={
+            step.status === "success"
+              ? "green"
+              : step.status === "error"
+              ? "red"
+              : "blue"
+          }
         >
-          {step.status === 'processing' && 'In progress...'}
-          {step.status === 'success' && 'Completed'}
-          {step.status === 'error' && 'Error occurred'}
+          {step.status === "processing" && "In progress..."}
+          {step.status === "success" && "Completed"}
+          {step.status === "error" && "Error occurred"}
         </Timeline.Item>
       ))}
     </Timeline>
   );
 
   return (
-    <Container size="lg">
+    <Container size="lg" py="xl">
       <Paper shadow="sm" p="xl" withBorder>
         {loading && <ProgressTimeline />}
         <Title order={2} mb="lg">
@@ -267,7 +278,9 @@ const MarkAttendanceBySite: React.FC = () => {
           </Stepper.Step>
 
           <Stepper.Step label="Select Month" description="Choose a month">
-            <MonthPicker value={value} onChange={handleMonthChange} />
+            <Flex justify="center" align="center">
+              <MonthPicker value={value} onChange={handleMonthChange} />
+            </Flex>
           </Stepper.Step>
 
           <Stepper.Step
@@ -346,7 +359,7 @@ const MarkAttendanceBySite: React.FC = () => {
             <FileInput
               label="Upload Attendance File"
               placeholder="Choose file"
-              accept=".jpeg,.png"
+              accept=".jpeg,.png,application/pdf"
               leftSection={<IconUpload size="1rem" />}
               {...form.getInputProps("file")}
             />
@@ -379,7 +392,7 @@ const MarkAttendanceBySite: React.FC = () => {
         </Stepper>
 
         {active !== 4 && (
-          <Group justify="flex-end" mt="xl">
+          <Group justify="center" mt="xl">
             {active !== 0 && (
               <Button variant="default" onClick={prevStep}>
                 Back
@@ -398,4 +411,3 @@ const MarkAttendanceBySite: React.FC = () => {
 };
 
 export default MarkAttendanceBySite;
-

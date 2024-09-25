@@ -1,28 +1,37 @@
-import { AppShell, Box } from "@mantine/core";
-import { Outlet } from "react-router-dom";
-import Sidebar from "../Sidebar/Sidebar";
-import HeaderContent from "../Header/Header";
+import { useMantineColorScheme, AppShell, Box } from "@mantine/core";
 import { useState } from "react";
+import { Outlet } from "react-router-dom";
+import { SidebarContent } from "../Sidebar/Navbar";
+import { Header } from "../Header/Header";
 
-const MainLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  const toggleSidebar = () => {
-    setSidebarOpen((prev) => !prev);
-  };
+export function MainLayout() {
+  const [opened, setOpened] = useState(false);
+  const { colorScheme } = useMantineColorScheme();
 
   return (
     <AppShell
       header={{ height: 70 }}
-      navbar={{ width: 250, breakpoint: "sm", collapsed: { mobile: !sidebarOpen } }}
+      navbar={{
+        width: 300,
+        breakpoint: "sm",
+        collapsed: { mobile: !opened },
+      }}
       padding="md"
+      styles={(theme) => ({
+        main: {
+          backgroundColor:
+            colorScheme === "dark"
+              ? theme.colors.dark[8]
+              : theme.colors.gray[0],
+        },
+      })}
     >
       <AppShell.Header>
-        <HeaderContent sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
+        <Header />
       </AppShell.Header>
 
-      <AppShell.Navbar>
-        <Sidebar sidebarOpen={sidebarOpen} />
+      <AppShell.Navbar p="md">
+        <SidebarContent />
       </AppShell.Navbar>
 
       <AppShell.Main>
@@ -32,6 +41,4 @@ const MainLayout = () => {
       </AppShell.Main>
     </AppShell>
   );
-};
-
-export default MainLayout;
+}

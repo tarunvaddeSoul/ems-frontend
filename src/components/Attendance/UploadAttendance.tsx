@@ -14,6 +14,7 @@ import {
   ThemeIcon,
   Stack,
   FileInput,
+  Flex,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconAlertCircle, IconCheck, IconUpload } from "@tabler/icons-react";
@@ -123,7 +124,7 @@ const UploadAttendance: React.FC = () => {
   };
 
   return (
-    <Container size="lg">
+    <Container size="lg" py="xl">
       <Paper shadow="sm" p="xl" withBorder>
         {/* <LoadingOverlay
           visible={loading}
@@ -136,6 +137,7 @@ const UploadAttendance: React.FC = () => {
         <Stepper
           active={active}
           onStepClick={setActive}
+          orientation="horizontal"
           mb="xl"
           allowNextStepsSelect={false}
         >
@@ -153,13 +155,12 @@ const UploadAttendance: React.FC = () => {
           </Stepper.Step>
 
           <Stepper.Step label="Select Month" description="Choose a month">
-            <MonthPicker
-              //   label="Select Month"
-              //   placeholder="Pick a month"
-              value={form.values.month ? new Date(form.values.month) : null}
-              onChange={handleMonthChange}
-              //   error={form.errors.month}
-            />
+            <Flex justify="center" align="center">
+              <MonthPicker
+                value={form.values.month ? new Date(form.values.month) : null}
+                onChange={handleMonthChange}
+              />
+            </Flex>
           </Stepper.Step>
 
           <Stepper.Step

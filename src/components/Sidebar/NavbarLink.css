@@ -1,0 +1,28 @@
+/* NavbarLink.css */
+.navbar-link {
+    transition: background-color 0.3s ease;
+  }
+  
+  .navbar-link:hover {
+    background-color: var(--mantine-hover-bg);
+  }
+  
+  .navbar-link.active {
+    background-color: var(--mantine-active-bg);
+    color: var(--mantine-active-text);
+  }
+  
+  /* Handle color schemes */
+  body[data-mantine-color-scheme='dark'] .navbar-link {
+    color: white;
+  }
+  
+  body[data-mantine-color-scheme='dark'] .navbar-link:hover {
+    background-color: #2c2e33;
+  }
+  
+  body[data-mantine-color-scheme='dark'] .navbar-link.active {
+    background-color: #3b3d42;
+    color: white;
+  }
+  

@@ -107,7 +107,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ initialValues, onSubmit, isLo
         ? convertToCustomDateFormat(values.companyOnboardingDate)
         : null,
     };
-    onSubmit(formattedValues as CompanyFormValues);
+    onSubmit(formattedValues as unknown as CompanyFormValues);
   });
 
   return (

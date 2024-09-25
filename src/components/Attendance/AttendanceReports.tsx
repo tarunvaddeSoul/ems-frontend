@@ -22,11 +22,13 @@ import {
   IconCheck,
   IconDownload,
   IconEye,
+  IconX,
 } from "@tabler/icons-react";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { useLocalStorage } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 
 // Types
 interface Company {
@@ -215,8 +217,14 @@ const AttendanceReports: React.FC = () => {
         label: formatMonthLabel(month),
       }));
       setMonths(formattedMonths);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching attendance months:", error);
+      notifications.show({
+        title: "Error",
+        message: error.response?.data?.message ?  error.response?.data?.message : "Error in fetching attendance months",
+        color: "red",
+        icon: <IconX />,
+      });
     } finally {
       setMonthLoading(false);
     }
@@ -326,7 +334,7 @@ const AttendanceReports: React.FC = () => {
   };
 
   return (
-    <Container size="xl" py="xl">
+    <Container size="lg" py="xl">
       <Paper shadow="sm" p="xl" withBorder>
         <LoadingOverlay
           visible={loading}
