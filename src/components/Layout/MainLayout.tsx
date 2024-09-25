@@ -1,16 +1,16 @@
-import { useMantineColorScheme, AppShell, Box } from "@mantine/core";
+import { useMantineColorScheme, AppShell, Box, ScrollArea } from "@mantine/core";
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { SidebarContent } from "../Sidebar/Navbar";
 import { Header } from "../Header/Header";
 
 export function MainLayout() {
-  const [opened, setOpened] = useState(false);
+  const [opened] = useState(false);
   const { colorScheme } = useMantineColorScheme();
-
+  const HEADER_HEIGHT = 70;
   return (
     <AppShell
-      header={{ height: 70 }}
+      header={{ height: HEADER_HEIGHT }}
       navbar={{
         width: 300,
         breakpoint: "sm",
@@ -31,13 +31,13 @@ export function MainLayout() {
       </AppShell.Header>
 
       <AppShell.Navbar p="md">
-        <SidebarContent />
+          <SidebarContent headerHeight={HEADER_HEIGHT} />
       </AppShell.Navbar>
 
-      <AppShell.Main>
-        <Box p="md">
-          <Outlet />
-        </Box>
+      <AppShell.Main style={{overflow: 'auto'}}>
+          <Box p="md">
+            <Outlet />
+          </Box>
       </AppShell.Main>
     </AppShell>
   );

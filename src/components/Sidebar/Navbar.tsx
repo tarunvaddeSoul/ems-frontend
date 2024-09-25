@@ -105,7 +105,7 @@ function NavbarLink({ icon: Icon, label, link, subLinks }: LinkProps) {
           fontWeight: 500,
           backgroundColor: isActive
             ? colorScheme === "dark"
-              ? theme.colors.grape[7] // Active state (dark mode)
+              ? theme.colors.dark[4] // Active state (dark mode)
               : theme.colors.grape[1] // Active state (light mode)
             : "",
           transition: "background-color 0.3s ease",
@@ -146,9 +146,9 @@ function NavbarLink({ icon: Icon, label, link, subLinks }: LinkProps) {
   );
 }
 
-export function SidebarContent() {
+export function SidebarContent({ headerHeight }) {
   return (
-    <ScrollArea h="100%">
+    <ScrollArea h={`calc(100vh - ${headerHeight}px)`} scrollbarSize={4}>
       <Box p="md">
         {links.map((link) => (
           <NavbarLink {...link} key={link.label} />
@@ -157,6 +157,3 @@ export function SidebarContent() {
     </ScrollArea>
   );
 }
-
-
-

@@ -1,4 +1,4 @@
-import { useMantineColorScheme, Box, Group, ActionIcon } from "@mantine/core";
+import { useMantineColorScheme, Box, Group, ActionIcon, Image } from "@mantine/core";
 import { IconSun, IconMoonStars } from "@tabler/icons-react";
 import UserMenu from "./UserMenu";
 
@@ -20,7 +20,9 @@ export function Header() {
         justifyContent: "space-between",
       })}
     >
-      <Group fw={1000}>ROSE</Group>
+      <Group fw={1000}>
+        ROSE
+      </Group>
 
       <Group>
         <ActionIcon

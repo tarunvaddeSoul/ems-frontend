@@ -6,6 +6,7 @@ import {
   LoadingOverlay,
   Loader,
   Box,
+  ScrollArea,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconCheck, IconX } from "@tabler/icons-react";
@@ -138,25 +139,28 @@ const AddEmployee: React.FC = () => {
 
   return (
     <Container size="xl">
-      <Title order={2} mb="xl">Add New Employee</Title>
-      <Box pos="relative">
-        <LoadingOverlay 
-          visible={loading} 
-          zIndex={1000}
-          overlayProps={{ radius: "sm", blur: 2 }}
-          loaderProps={{ children: <Loader size={30} type="ring" color="violet" /> }}
-        />
-        <Paper shadow="xs" p="md">
-          <EmployeeForm
-            onSubmit={handleSubmit}
-            designations={designations}
-            employeeDepartments={employeeDepartments}
-            companies={companies}
+      <ScrollArea h={800}>
+        <Title order={2} mb="xl">Add New Employee</Title>
+        <Box pos="relative">
+          <LoadingOverlay 
+            visible={loading} 
+            zIndex={1000}
+            overlayProps={{ radius: "sm", blur: 2 }}
+            loaderProps={{ children: <Loader size={30} type="ring" color="violet" /> }}
           />
-        </Paper>
-      </Box>
+          <Paper shadow="xs" p="md">
+            <EmployeeForm
+              onSubmit={handleSubmit}
+              designations={designations}
+              employeeDepartments={employeeDepartments}
+              companies={companies}
+            />
+          </Paper>
+        </Box>
+      </ScrollArea>
     </Container>
   );
+  
 };
 
 export default AddEmployee;

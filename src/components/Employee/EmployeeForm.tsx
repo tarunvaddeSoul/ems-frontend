@@ -137,6 +137,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
   };
 
   return (
+    
+    // <ScrollArea h='100%'>
     <form onSubmit={form.onSubmit(onSubmit)}>
       <Title order={3} mb="md">
         Basic Details
@@ -629,6 +631,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
         <Button type="submit">Submit</Button>
       </Group>
     </form>
+    // </ScrollArea>
+
   );
 };
 
